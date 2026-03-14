@@ -129,18 +129,6 @@
 .menu-btn-run.active {
     background-color: #00dc82 !important;
     color: #000 !important;
-}
-
-.menu-btn-debug {
-    color: #f59e0b;
-}
-
-.menu-btn-debug:hover {
-    background-color: rgba(245, 158, 11, 0.15) !important;
-    color: #f59e0b !important;
-}
-
-.menu-btn-debug.active {
-    background-color: #f59e0b !important;
-    color: #000 !important;
+    box-shadow: 0 0 15px rgba(0, 220, 130, 0.4);
+    transform: scale(1.05);
 }

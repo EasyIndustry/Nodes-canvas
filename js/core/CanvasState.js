@@ -24,6 +24,7 @@ window.NodesCanvas.CanvasState = {
                 panels: this._serializePanels(),
                 callNodes: this._serializeCallNodes(),
                 sliders: this._serializeSliders(),
+                viewers: this._serializeViewers(),
                 connections: this._serializeConnections(),
             };
             localStorage.setItem(this.KEY, JSON.stringify(state));
@@ -87,14 +88,21 @@ window.NodesCanvas.CanvasState = {
                 });
             }
 
-            // 7. Restore Connections (after nodes are in DOM)
+            // 7. Restore Viewer Nodes
+            if (state.viewers) {
+                state.viewers.forEach(cfg => {
+                    new window.NodesCanvas.ViewerNode(cfg);
+                });
+            }
+
+            // 8. Restore Connections (after nodes are in DOM)
             if (state.connections) {
                 requestAnimationFrame(() => {
                     state.connections.forEach(conn => {
                         const fromSocket = document.querySelector(`[data-portid="${conn.fromPort}"]`);
                         const toSocket = document.querySelector(`[data-portid="${conn.toPort}"]`);
-                        if (fromSocket && toSocket && window.NodesCanvas.connectionManager) {
-                            window.NodesCanvas.connectionManager.createConnection(fromSocket, toSocket);
+                        if (fromSocket && toSocket && window.NodesCanvas.ConnectionManager) {
+                            window.NodesCanvas.ConnectionManager.createConnection(fromSocket, toSocket);
                         }
                     });
                 });
@@ -190,12 +198,26 @@ window.NodesCanvas.CanvasState = {
 
     _serializeConnections() {
         const conns = [];
-        document.querySelectorAll('.connection-path').forEach(path => {
+        document.querySelectorAll('.connection-path:not(.temp-path)').forEach(path => {
             const from = path.dataset.fromPort;
             const to = path.dataset.toPort;
             if (from && to) conns.push({ fromPort: from, toPort: to });
         });
         return conns;
+    },
+
+    _serializeViewers() {
+        const viewers = [];
+        const instances = window.NodesCanvas._viewerInstances || {};
+        Object.values(instances).forEach(viewer => {
+            viewers.push({
+                id: viewer.id,
+                x: viewer.x,
+                y: viewer.y,
+                label: viewer.label
+            });
+        });
+        return viewers;
     },
 
     /** Recursively re-apply editable: false to built-in IDs */

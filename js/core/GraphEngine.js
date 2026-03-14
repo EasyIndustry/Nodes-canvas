@@ -1,13 +1,15 @@
 // GraphEngine.js - Execution engine for the node canvas graph
-// Run mode: continuous evaluation. Debug mode: step-through with breakpoints.
+// Run mode: continuous evaluation.
 
 window.NodesCanvas = window.NodesCanvas || {};
+
+window.NodesCanvas.executionMode = null;
 
 window.NodesCanvas.GraphEngine = {
 
     // ── State ────────────────────────────────────────────────────────────────
     _runListeners: [],        // panel input listeners bound in run mode
-    _debugState: null,        // { order, nodes, connections, step, breakpoints }
+    _runObserver: null,
 
     // ── Value parsing ─────────────────────────────────────────────────────────
     _parseValue(str) {
@@ -66,9 +68,6 @@ window.NodesCanvas.GraphEngine = {
             };
         });
 
-        // --- Manual Data nodes (constants / variables) ---
-        // (keeping previous logic)
-
         // --- Call Data nodes (references) ---
         Object.values(window.NodesCanvas._callInstances || {}).forEach(callNode => {
             // Get port id
@@ -88,10 +87,9 @@ window.NodesCanvas.GraphEngine = {
             };
         });
 
-        // --- Regular function nodes ---
+        // --- Regular nodes & Sliders & Viewers ---
         Object.values(window.NodesCanvas._nodeInstances || {}).forEach(node => {
             if (node instanceof window.NodesCanvas.SliderNode) {
-                // Handle SliderNode specially
                 const outPortId = (node.id + '_out');
                 nodes[node.id] = {
                     id: node.id,
@@ -103,6 +101,16 @@ window.NodesCanvas.GraphEngine = {
                     outputs: [outPortId],
                     resolvedOutputs: {},
                     error: null,
+                };
+            } else if (node instanceof window.NodesCanvas.ViewerNode) {
+                nodes[node.id] = {
+                    id: node.id,
+                    type: 'viewer',
+                    label: node.label,
+                    inputPorts: [node.id + '_in'],
+                    resolvedInputs: {},
+                    resolvedOutputs: {},
+                    error: null
                 };
             } else {
                 // Regular function node
@@ -148,13 +156,13 @@ window.NodesCanvas.GraphEngine = {
         const sorted = [];
 
         while (queue.length) {
-            const cur = queue.shift();
-            sorted.push(cur);
-            (adj[cur] || []).forEach(next => {
-                if (--inDegree[next] === 0) queue.push(next);
+            const u = queue.shift();
+            sorted.push(u);
+            adj[u].forEach(v => {
+                inDegree[v]--;
+                if (inDegree[v] === 0) queue.push(v);
             });
         }
-
         return sorted;
     },
 
@@ -175,44 +183,49 @@ window.NodesCanvas.GraphEngine = {
                 return;
             }
 
-            if (!nodeData.code || !nodeData.code.trim()) {
-                console.warn(`[GraphEngine] No code for node "${nodeData.label}"`);
+            if (nodeData.type === 'viewer') {
+                const inputPortId = nodeData.inputPorts[0];
+                let val = undefined;
+                conns.forEach(conn => {
+                    if (conn.targetNodeId === nodeData.id && conn.targetPortId === inputPortId) {
+                        const upstream = allNodes[conn.sourceNodeId];
+                        if (upstream) val = upstream.resolvedOutputs[conn.sourcePortId];
+                    }
+                });
+                const inst = window.NodesCanvas._viewerInstances[nodeData.id];
+                if (inst) inst.setValue(val);
                 return;
             }
 
-            // Resolve inputs from upstream connections
+            if (!nodeData.code || !nodeData.code.trim()) return;
+
+            // Resolve inputs
             const inputObj = {};
             conns.forEach(conn => {
                 if (conn.targetNodeId !== nodeData.id) return;
                 const upstream = allNodes[conn.sourceNodeId];
                 if (!upstream) return;
                 const val = upstream.resolvedOutputs[conn.sourcePortId];
-
                 const idx = nodeData.inputPorts.indexOf(conn.targetPortId);
                 const varName = this._toVar(idx >= 0 ? (nodeData.inputLabels[idx] || conn.targetPortId) : conn.targetPortId);
                 inputObj[varName] = val;
             });
 
             nodeData.resolvedInputs = inputObj;
-            console.log(`[GraphEngine] Executing "${nodeData.label}" with:`, inputObj);
 
-            // Execute: code defines function execute({...}) {...}
+            // Execute
             const fn = new Function(nodeData.code + '\nreturn execute;')();
             const result = fn(inputObj);
-            console.log(`[GraphEngine] "${nodeData.label}" result:`, result);
 
-            // Map result keys → output port ids by label then by position
             if (result && typeof result === 'object') {
                 const resultKeys = Object.keys(result);
                 nodeData.outputPorts.forEach((portId, idx) => {
-                    const label = nodeData.outputLabels?.[idx];
-                    const varName = label ? this._toVar(label) : null;
-
+                    const label = nodeData.outputLabels[idx];
                     let resolved;
-                    if (varName && Object.prototype.hasOwnProperty.call(result, varName)) {
-                        resolved = result[varName];
+                    if (result.hasOwnProperty(label)) {
+                        resolved = result[label];
                     } else if (idx < resultKeys.length) {
-                        resolved = result[resultKeys[idx]];   // positional fallback
+                        resolved = result[resultKeys[idx]];
                     } else {
                         resolved = undefined;
                     }
@@ -227,13 +240,13 @@ window.NodesCanvas.GraphEngine = {
 
     // ── Full execution ────────────────────────────────────────────────────────
     execute() {
-        this._clearVisuals();
+        if (window.NodesCanvas.executionMode !== 'run') return;
 
+        this._clearVisuals();
         const { nodes, conns } = this._buildGraph();
         if (!Object.keys(nodes).length) return;
 
         const order = this._topoSort(nodes, conns);
-
         order.forEach(id => this._execNode(nodes[id], conns, nodes));
 
         this._showResults(nodes);
@@ -243,35 +256,29 @@ window.NodesCanvas.GraphEngine = {
     // ── RUN MODE ─────────────────────────────────────────────────────────────
     startRunMode() {
         this.stopRunMode();
-        this.execute();  // initial run
+        window.NodesCanvas.executionMode = 'run';
+        this.execute();
 
-        // Re-run on every Panel textarea change (debounced 300ms)
-        let runTimer = null;
         const rerun = () => {
-            clearTimeout(runTimer);
-            runTimer = setTimeout(() => this.execute(), 300);
+            if (window.NodesCanvas.executionMode === 'run') this.execute();
         };
 
-        document.querySelectorAll('.panel-textarea').forEach(ta => {
-            ta.addEventListener('input', rerun);
-            this._runListeners.push({ el: ta, fn: rerun });
-        });
-
-        // Re-run on Slider change
-        document.querySelectorAll('.slider-gh-range').forEach(sr => {
-            sr.addEventListener('input', rerun);
-            this._runListeners.push({ el: sr, fn: rerun });
-        });
-
-        // Also listen to future data nodes being added (MutationObserver)
-        this._runObserver = new MutationObserver(() => {
-            // re-bind any new textareas and sliders
-            document.querySelectorAll('.panel-textarea, .slider-gh-range').forEach(el => {
+        // Re-bind listeners
+        const bind = (selector) => {
+            document.querySelectorAll(selector).forEach(el => {
                 if (!this._runListeners.find(l => l.el === el)) {
                     el.addEventListener('input', rerun);
-                    this._runListeners.push({ el: el, fn: rerun });
+                    this._runListeners.push({ el, fn: rerun });
                 }
             });
+        };
+
+        bind('.panel-textarea');
+        bind('.slider-gh-range');
+
+        this._runObserver = new MutationObserver(() => {
+            bind('.panel-textarea');
+            bind('.slider-gh-range');
         });
         const layer = document.getElementById('canvas-layer');
         if (layer) this._runObserver.observe(layer, { childList: true, subtree: true });
@@ -280,201 +287,33 @@ window.NodesCanvas.GraphEngine = {
     },
 
     stopRunMode() {
+        window.NodesCanvas.executionMode = null;
         this._runListeners.forEach(({ el, fn }) => el.removeEventListener('input', fn));
         this._runListeners = [];
         if (this._runObserver) { this._runObserver.disconnect(); this._runObserver = null; }
+
+        // Clear all viewer displays when stopping
+        Object.values(window.NodesCanvas._viewerInstances || {}).forEach(inst => inst.clear());
+
         this._clearVisuals();
         console.log('[GraphEngine] Run mode stopped');
-    },
-
-    // ── DEBUG MODE ────────────────────────────────────────────────────────────
-    startDebugMode() {
-        this.stopDebugMode();
-        this._clearVisuals();
-
-        const { nodes, conns } = this._buildGraph();
-        const order = this._topoSort(nodes, conns);
-
-        this._debugState = {
-            nodes,
-            conns,
-            order,
-            step: 0,
-            breakpoints: new Set(),  // node ids
-        };
-
-        this._renderDebugOverlays();
-        console.log('[GraphEngine] Debug mode started. Use Step buttons or set breakpoints.');
-    },
-
-    stopDebugMode() {
-        if (!this._debugState) return;
-        this._debugState = null;
-        document.querySelectorAll('.debug-overlay').forEach(el => el.remove());
-        this._clearVisuals();
-        console.log('[GraphEngine] Debug mode stopped');
-    },
-
-    debugStep() {
-        const ds = this._debugState;
-        if (!ds || ds.step >= ds.order.length) {
-            console.log('[GraphEngine] Debug: execution complete');
-            this._showResults(ds?.nodes || {});
-            return false;
-        }
-
-        const nodeId = ds.order[ds.step];
-        const nodeData = ds.nodes[nodeId];
-
-        this._execNode(nodeData, ds.conns, ds.nodes);
-        this._highlightDebugNode(nodeId);
-        this._updateDebugOverlays(ds);
-
-        ds.step++;
-        return ds.step < ds.order.length;
-    },
-
-    debugRunToBreakpoint() {
-        const ds = this._debugState;
-        if (!ds) return;
-
-        let hasMore = true;
-        while (hasMore) {
-            const nodeId = ds.order[ds.step];
-            if (!nodeId) { hasMore = false; break; }
-
-            hasMore = this.debugStep();
-
-            const nextId = ds.order[ds.step];
-            if (nextId && ds.breakpoints.has(nextId)) break;
-        }
-
-        this._showResults(ds.nodes);
-    },
-
-    toggleBreakpoint(nodeId) {
-        const ds = this._debugState;
-        if (!ds) return;
-        if (ds.breakpoints.has(nodeId)) {
-            ds.breakpoints.delete(nodeId);
-        } else {
-            ds.breakpoints.add(nodeId);
-        }
-        this._updateDebugOverlays(ds);
-    },
-
-    // ── Debug overlay rendering ───────────────────────────────────────────────
-    _renderDebugOverlays() {
-        document.querySelectorAll('.debug-overlay').forEach(el => el.remove());
-
-        const ds = this._debugState;
-        const canvasLayer = document.getElementById('canvas-layer');
-
-        ds.order.forEach((nodeId, stepIdx) => {
-            const nodeEl = document.getElementById(nodeId);
-            if (!nodeEl) return;
-
-            const overlay = document.createElement('div');
-            overlay.className = 'debug-overlay';
-            overlay.dataset.nodeId = nodeId;
-            overlay.innerHTML = `
-                <button class="dbg-bp-btn" title="Toggle Breakpoint" data-node="${nodeId}">🔴</button>
-                <span class="dbg-step-num">#${stepIdx + 1}</span>
-                <button class="dbg-step-btn" title="Step to here" data-node="${nodeId}">▶ Step</button>
-            `;
-
-            overlay.querySelector('.dbg-bp-btn').addEventListener('click', e => {
-                e.stopPropagation();
-                this.toggleBreakpoint(nodeId);
-            });
-            overlay.querySelector('.dbg-step-btn').addEventListener('click', e => {
-                e.stopPropagation();
-                // Advance until this node is executed
-                while (ds.step < ds.order.length && ds.order[ds.step - 1] !== nodeId) {
-                    this.debugStep();
-                }
-                this._showResults(ds.nodes);
-            });
-
-            canvasLayer.appendChild(overlay);
-            this._positionOverlay(overlay, nodeEl);
-        });
-
-        // Global debug toolbar
-        this._renderDebugToolbar();
-    },
-
-    _positionOverlay(overlay, nodeEl) {
-        const match = nodeEl.style.transform.match(/translate\(([^,]+)px,\s*([^)]+)px\)/);
-        if (!match) return;
-        const nx = parseFloat(match[1]);
-        const ny = parseFloat(match[2]);
-        const nw = nodeEl.offsetWidth || 160;
-        overlay.style.transform = `translate(${nx}px, ${ny - 32}px)`;
-        overlay.style.width = nw + 'px';
-    },
-
-    _updateDebugOverlays(ds) {
-        ds.order.forEach((nodeId, stepIdx) => {
-            const overlay = document.querySelector(`.debug-overlay[data-node-id="${nodeId}"]`);
-            if (!overlay) return;
-
-            const hasBP = ds.breakpoints.has(nodeId);
-            const isDone = stepIdx < ds.step;
-            const isCurrent = stepIdx === ds.step - 1;
-
-            overlay.classList.toggle('dbg-breakpoint', hasBP);
-            overlay.classList.toggle('dbg-done', isDone);
-            overlay.classList.toggle('dbg-current', isCurrent);
-        });
-    },
-
-    _renderDebugToolbar() {
-        document.getElementById('debug-toolbar')?.remove();
-        const toolbar = document.createElement('div');
-        toolbar.id = 'debug-toolbar';
-        toolbar.innerHTML = `
-            <button id="dbg-step-one">▶ Step</button>
-            <button id="dbg-run-bp">⏩ Run to Breakpoint</button>
-            <button id="dbg-run-all">⏭ Run All</button>
-        `;
-        document.body.appendChild(toolbar);
-
-        toolbar.querySelector('#dbg-step-one').addEventListener('click', () => {
-            this.debugStep();
-            this._showResults(this._debugState?.nodes || {});
-        });
-        toolbar.querySelector('#dbg-run-bp').addEventListener('click', () => this.debugRunToBreakpoint());
-        toolbar.querySelector('#dbg-run-all').addEventListener('click', () => {
-            const ds = this._debugState;
-            if (!ds) return;
-            while (ds.step < ds.order.length) this.debugStep();
-            this._showResults(ds.nodes);
-        });
-    },
-
-    _highlightDebugNode(nodeId) {
-        document.querySelectorAll('.node-debug-current').forEach(el => el.classList.remove('node-debug-current'));
-        document.getElementById(nodeId)?.classList.add('node-debug-current');
     },
 
     // ── Visual results ────────────────────────────────────────────────────────
     _showResults(nodes) {
         this._clearVisuals();
 
+        // In Run mode, we ONLY show errors on nodes. Actual values go to Viewers or badges.
         Object.values(nodes).forEach(node => {
             if (node.error) {
                 document.getElementById(node.id)?.classList.add('node-error');
             }
 
-            Object.entries(node.resolvedOutputs).forEach(([portId, value]) => {
-                // If in Run Mode, don't show badges for Sliders or Manual Data nodes
-                // (because their values are already visible in their UI)
-                const isRunMode = window.NodesCanvas.executionMode === 'run';
-                if (isRunMode && (node.type === 'slider' || node.type === 'manual-data')) {
-                    return;
-                }
+            // We only show floating badges if NOT in run mode (though execute usually doesn't run then)
+            // But if we want to show results after an explicit execute call:
+            if (window.NodesCanvas.executionMode === 'run') return;
 
+            Object.entries(node.resolvedOutputs).forEach(([portId, value]) => {
                 const socket = document.querySelector(`[data-portid="${portId}"]`);
                 if (!socket) return;
 
@@ -493,13 +332,5 @@ window.NodesCanvas.GraphEngine = {
     _clearVisuals() {
         document.querySelectorAll('.socket-value-badge').forEach(b => b.remove());
         document.querySelectorAll('.node-error').forEach(n => n.classList.remove('node-error'));
-        document.querySelectorAll('.node-debug-current').forEach(n => n.classList.remove('node-debug-current'));
-    },
-
-    // Legacy exportToJS removed in favor of CodeInspector.js
-    exportToJS() {
-        if (window.NodesCanvas.CodeInspector) {
-            window.NodesCanvas.CodeInspector.open();
-        }
-    },
+    }
 };

@@ -23,9 +23,9 @@
 }
 
 .node.selected {
-    border-color: var(--accent-color);
-    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.3), var(--shadow-md);
-    z-index: 100;
+    border-color: var(--accent-color) !important;
+    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.4), var(--shadow-md) !important;
+    z-index: 1000;
     /* Bring to front when selected */
 }
 
@@ -826,6 +826,13 @@ body.light-theme .panel-type-object {
    Slider Node - GH Horizontal Style
    ============================================================ */
 
+i.menu-btn-run.active {
+    background-color: #00dc82 !important;
+    color: #000 !important;
+    box-shadow: 0 0 15px rgba(0, 220, 130, 0.4);
+    transform: scale(1.05);
+}
+
 .slider-node {
     border: none !important;
     background: none !important;
@@ -985,4 +992,111 @@ body.light-theme .gh-socket {
 body.light-theme .slider-gh-value-input {
     background: #fff;
     color: #000;
+}
+
+/* Viewer Node - Visual monitoring of data */
+.viewer-node {
+    border-color: #3b82f6 !important;
+    min-width: 160px;
+    background: var(--node-bg);
+    display: flex;
+    flex-direction: column;
+    border-radius: 12px;
+    overflow: hidden;
+    /* Clip internal parts to node radius */
+}
+
+.viewer-header {
+    background: rgba(59, 130, 246, 0.12);
+    border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+    padding: 0 12px;
+    height: 34px;
+    color: #3b82f6;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: move;
+}
+
+.viewer-main {
+    display: flex;
+    flex-grow: 1;
+    position: relative;
+    padding: 0;
+    background: transparent;
+}
+
+.viewer-port-side {
+    width: 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.02);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.viewer-body {
+    flex-grow: 1;
+    padding: 10px 12px;
+    background: rgba(0, 0, 0, 0.2);
+    min-height: 48px;
+    max-height: 240px;
+    overflow: auto;
+}
+
+.viewer-display {
+    font-family: 'Fira Code', monospace;
+    font-size: 11px;
+    color: #00dc82;
+    white-space: pre-wrap;
+    word-break: break-all;
+    line-height: 1.4;
+}
+
+.viewer-placeholder {
+    color: rgba(255, 255, 255, 0.2);
+    font-style: italic;
+    font-size: 10px;
+}
+
+/* Light Theme refinements */
+body.light-theme .viewer-node {
+    background: #ffffff;
+    border-color: #3b82f6;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+body.light-theme .viewer-header {
+    background: #f0f7ff;
+    color: #2563eb;
+    border-bottom-color: #dbeafe;
+}
+
+body.light-theme .viewer-body {
+    background: #f8fafc;
+}
+
+body.light-theme .viewer-display {
+    color: #059669;
+}
+
+body.light-theme .viewer-placeholder {
+    color: #94a3b8;
+}
+
+body.light-theme .viewer-port-side {
+    background: #f8fafc;
+    border-right-color: #e2e8f0;
+}
+
+/* Remove debug residues */
+.debug-overlay,
+#debug-toolbar,
+.node-debug-current {
+    display: none !important;
 }

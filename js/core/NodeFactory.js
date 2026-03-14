@@ -15,6 +15,8 @@ window.NodesCanvas.NodeFactory = {
         // Choose class based on metadata or ID
         if (nodeTemplate.id === 'n_manual_data' || nodeTemplate.isSpecial === 'manual-data') {
             return new window.NodesCanvas.ManualDataNode(config);
+        } else if (nodeTemplate.id === 'n_viewer') { // Added ViewerNode
+            return new window.NodesCanvas.ViewerNode(config);
         } else if (nodeTemplate.id === 'n_call_data' || nodeTemplate.isSpecial === 'call-data') {
             return new window.NodesCanvas.CallDataNode(config);
         } else if (nodeTemplate.id === 'n_slider' || nodeTemplate.isSlider) {
@@ -55,6 +57,11 @@ window.NodesCanvas.NodeFactory = {
                 value: instance.value,
                 rounding: instance.rounding,
                 precision: instance.precision
+            };
+        } else if (instance instanceof window.NodesCanvas.ViewerNode) {
+            config = {
+                id: 'n_viewer',
+                label: instance.label
             };
         } else {
             config = {

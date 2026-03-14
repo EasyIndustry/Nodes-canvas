@@ -30,6 +30,13 @@ window.NodesCanvas.Registry = {
                     isSlider: true, // Handled by SliderNode class
                     icon: 'sliders-horizontal',
                     editable: false
+                },
+                {
+                    id: 'n_viewer',
+                    title: 'Viewer',
+                    icon: 'eye',
+                    isSpecial: true,
+                    editable: false
                 }
             ],
             subfolders: []
@@ -215,19 +222,50 @@ window.NodesCanvas.Registry = {
 
     /** Ensure built-in folders contain all required nodes after loading from state */
     syncBuiltInFolders() {
-        const dataFolder = this._findFolder(this.folders, 'f_data');
-        if (dataFolder) {
-            const hasSlider = dataFolder.nodes.some(n => n.id === 'n_slider');
-            if (!hasSlider) {
-                dataFolder.nodes.push({
-                    id: 'n_slider',
-                    title: 'Number Slider',
-                    isSlider: true,
-                    icon: 'sliders-horizontal',
-                    editable: false
-                });
-            }
+        // 1. Ensure Data Folder
+        let dataFolder = this._findFolder(this.folders, 'f_data');
+        if (!dataFolder) {
+            dataFolder = { id: 'f_data', name: 'Data', editable: false, nodes: [], subfolders: [] };
+            this.folders.unshift(dataFolder);
         }
+
+        const ensureNode = (folder, nodeTemplate) => {
+            if (!folder.nodes.some(n => n.id === nodeTemplate.id)) {
+                folder.nodes.push({ ...nodeTemplate, editable: false });
+            }
+        };
+
+        ensureNode(dataFolder, { id: 'n_manual_data', title: 'Manual Data', icon: 'database', isSpecial: true });
+        ensureNode(dataFolder, { id: 'n_call_data', title: 'Call Data', icon: 'external-link', isSpecial: true });
+        ensureNode(dataFolder, { id: 'n_slider', title: 'Number Slider', icon: 'sliders-horizontal', isSlider: true });
+        ensureNode(dataFolder, { id: 'n_viewer', title: 'Viewer', icon: 'eye', isSpecial: true });
+
+        // 2. Ensure Math Folder
+        let mathFolder = this._findFolder(this.folders, 'f_math');
+        if (!mathFolder) {
+            mathFolder = { id: 'f_math', name: 'Math', editable: false, nodes: [], subfolders: [] };
+            this.folders.splice(this.folders.indexOf(dataFolder) + 1, 0, mathFolder);
+        }
+        ensureNode(mathFolder, {
+            id: 'n_add', title: 'Add', icon: 'plus', builtIn: true, inputs: [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }], outputs: [{ id: 'out', label: 'Result' }],
+            code: 'function execute({ A, B }) {\n    return { Result: Number(A) + Number(B) };\n}'
+        });
+        ensureNode(mathFolder, {
+            id: 'n_mult', title: 'Multiply', icon: 'x', builtIn: true, inputs: [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }], outputs: [{ id: 'out', label: 'Result' }],
+            code: 'function execute({ A, B }) {\n    return { Result: Number(A) * Number(B) };\n}'
+        });
+
+        // 3. Ensure Logic Folder
+        let logicFolder = this._findFolder(this.folders, 'f_logic');
+        if (!logicFolder) {
+            logicFolder = { id: 'f_logic', name: 'Logic', editable: false, nodes: [], subfolders: [] };
+            this.folders.splice(this.folders.indexOf(mathFolder) + 1, 0, logicFolder);
+        }
+        ensureNode(logicFolder, {
+            id: 'n_and', title: 'And', icon: 'check-square', builtIn: true, inputs: [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }], outputs: [{ id: 'out', label: 'Result' }],
+            code: 'function execute({ A, B }) {\n    return { Result: Boolean(A && B) };\n}'
+        });
+
         this._notify();
     }
 };

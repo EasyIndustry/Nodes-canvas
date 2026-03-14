@@ -20,6 +20,10 @@ window.NodesCanvas.Connection = class {
         this.svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         this.svgElement.setAttribute('class', 'connection-path');
         this.svgElement.setAttribute('id', this.id);
+        this.svgElement.dataset.fromNode = this.sourceNodeId;
+        this.svgElement.dataset.fromPort = this.sourcePortId;
+        this.svgElement.dataset.toNode = this.targetNodeId;
+        this.svgElement.dataset.toPort = this.targetPortId;
 
         const layer = document.getElementById("connections-layer");
         if (layer) layer.appendChild(this.svgElement);
@@ -174,6 +178,9 @@ window.NodesCanvas.ConnectionManager = {
                         if (window.NodesCanvas.CodeInspector && window.NodesCanvas.CodeInspector._isOpen) {
                             window.NodesCanvas.CodeInspector.refresh();
                         }
+                        if (window.NodesCanvas.executionMode === 'run' && window.NodesCanvas.GraphEngine) {
+                            window.NodesCanvas.GraphEngine.execute();
+                        }
                     }
                 }
             }
@@ -235,6 +242,21 @@ window.NodesCanvas.ConnectionManager = {
             this.connections[connIndex].destroy();
             this.connections.splice(connIndex, 1);
         }
+    },
+
+    createConnection(fromSocket, toSocket) {
+        const fromNode = fromSocket.closest('.node');
+        const toNode = toSocket.closest('.node');
+        if (!fromNode || !toNode) return;
+
+        const sourceNodeId = fromNode.id;
+        const sourcePortId = fromSocket.dataset.portid;
+        const targetNodeId = toNode.id;
+        const targetPortId = toSocket.dataset.portid;
+
+        const newConn = new window.NodesCanvas.Connection(sourceNodeId, sourcePortId, targetNodeId, targetPortId);
+        this.connections.push(newConn);
+        return newConn;
     }
 };
 

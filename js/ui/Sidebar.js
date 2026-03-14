@@ -36,6 +36,8 @@ window.NodesCanvas.Sidebar = class {
     renderTree(folders) {
         this.treeContainer.innerHTML = '';
         this.renderFolderLevel(folders, this.treeContainer);
+        // Create icons only ONCE after the whole tree is in the DOM
+        if (window.lucide) window.lucide.createIcons();
     }
 
 
@@ -181,7 +183,6 @@ window.NodesCanvas.Sidebar = class {
             folderEl.appendChild(headerEl);
             folderEl.appendChild(contentEl);
 
-            if (window.lucide) window.lucide.createIcons();
             parentContainer.appendChild(folderEl);
         });
     }
