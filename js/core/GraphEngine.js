@@ -90,22 +90,39 @@ window.NodesCanvas.GraphEngine = {
 
         // --- Regular function nodes ---
         Object.values(window.NodesCanvas._nodeInstances || {}).forEach(node => {
-            const inputPorts = node.inputs.map(i => i.id);
-            const outputPorts = node.outputs.map(o => o.id);
+            if (node instanceof window.NodesCanvas.SliderNode) {
+                // Handle SliderNode specially
+                const outPortId = (node.id + '_out');
+                nodes[node.id] = {
+                    id: node.id,
+                    type: 'slider',
+                    label: node.label,
+                    value: node.value,
+                    outPortId,
+                    inputs: [],
+                    outputs: [outPortId],
+                    resolvedOutputs: {},
+                    error: null,
+                };
+            } else {
+                // Regular function node
+                const inputPorts = node.inputs.map(i => i.id);
+                const outputPorts = node.outputs.map(o => o.id);
 
-            nodes[node.id] = {
-                id: node.id,
-                type: 'function',
-                label: node.title,
-                code: node.code || '',
-                inputPorts,
-                outputPorts,
-                inputLabels: node.inputs.map(i => i.label),
-                outputLabels: node.outputs.map(o => o.label),
-                resolvedInputs: {},
-                resolvedOutputs: {},
-                error: null,
-            };
+                nodes[node.id] = {
+                    id: node.id,
+                    type: 'function',
+                    label: node.title,
+                    code: node.code || '',
+                    inputPorts,
+                    outputPorts,
+                    inputLabels: node.inputs.map(i => i.label),
+                    outputLabels: node.outputs.map(o => o.label),
+                    resolvedInputs: {},
+                    resolvedOutputs: {},
+                    error: null,
+                };
+            }
         });
 
         return { nodes, conns };
@@ -151,6 +168,10 @@ window.NodesCanvas.GraphEngine = {
             if (nodeData.type === 'call-data') {
                 const inst = window.NodesCanvas._callInstances?.[nodeData.id];
                 nodeData.resolvedOutputs[nodeData.outPortId] = inst ? inst.getValue() : undefined;
+                return;
+            }
+            if (nodeData.type === 'slider') {
+                nodeData.resolvedOutputs[nodeData.outPortId] = nodeData.value;
                 return;
             }
 
@@ -236,13 +257,19 @@ window.NodesCanvas.GraphEngine = {
             this._runListeners.push({ el: ta, fn: rerun });
         });
 
+        // Re-run on Slider change
+        document.querySelectorAll('.slider-gh-range').forEach(sr => {
+            sr.addEventListener('input', rerun);
+            this._runListeners.push({ el: sr, fn: rerun });
+        });
+
         // Also listen to future data nodes being added (MutationObserver)
         this._runObserver = new MutationObserver(() => {
-            // re-bind any new textareas
-            document.querySelectorAll('.panel-textarea').forEach(ta => {
-                if (!this._runListeners.find(l => l.el === ta)) {
-                    ta.addEventListener('input', rerun);
-                    this._runListeners.push({ el: ta, fn: rerun });
+            // re-bind any new textareas and sliders
+            document.querySelectorAll('.panel-textarea, .slider-gh-range').forEach(el => {
+                if (!this._runListeners.find(l => l.el === el)) {
+                    el.addEventListener('input', rerun);
+                    this._runListeners.push({ el: el, fn: rerun });
                 }
             });
         });
@@ -441,6 +468,13 @@ window.NodesCanvas.GraphEngine = {
             }
 
             Object.entries(node.resolvedOutputs).forEach(([portId, value]) => {
+                // If in Run Mode, don't show badges for Sliders or Manual Data nodes
+                // (because their values are already visible in their UI)
+                const isRunMode = window.NodesCanvas.executionMode === 'run';
+                if (isRunMode && (node.type === 'slider' || node.type === 'manual-data')) {
+                    return;
+                }
+
                 const socket = document.querySelector(`[data-portid="${portId}"]`);
                 if (!socket) return;
 

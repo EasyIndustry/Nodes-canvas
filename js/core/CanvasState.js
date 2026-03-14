@@ -23,6 +23,7 @@ window.NodesCanvas.CanvasState = {
                 nodes: this._serializeNodes(),
                 panels: this._serializePanels(),
                 callNodes: this._serializeCallNodes(),
+                sliders: this._serializeSliders(),
                 connections: this._serializeConnections(),
             };
             localStorage.setItem(this.KEY, JSON.stringify(state));
@@ -42,6 +43,9 @@ window.NodesCanvas.CanvasState = {
             if (state.registry) {
                 this._applyProtection(state.registry);
                 window.NodesCanvas.Registry.folders = state.registry;
+                if (window.NodesCanvas.Registry.syncBuiltInFolders) {
+                    window.NodesCanvas.Registry.syncBuiltInFolders();
+                }
                 if (window.NodesCanvas.Registry.triggerUpdate) {
                     window.NodesCanvas.Registry.triggerUpdate();
                 }
@@ -76,7 +80,14 @@ window.NodesCanvas.CanvasState = {
                 });
             }
 
-            // 6. Restore Connections (after nodes are in DOM)
+            // 6. Restore Slider Nodes
+            if (state.sliders) {
+                state.sliders.forEach(cfg => {
+                    new window.NodesCanvas.SliderNode(cfg);
+                });
+            }
+
+            // 7. Restore Connections (after nodes are in DOM)
             if (state.connections) {
                 requestAnimationFrame(() => {
                     state.connections.forEach(conn => {
@@ -153,6 +164,28 @@ window.NodesCanvas.CanvasState = {
             });
         });
         return calls;
+    },
+
+    _serializeSliders() {
+        const sliders = [];
+        const instances = window.NodesCanvas._nodeInstances || {};
+        Object.values(instances).forEach(node => {
+            if (node instanceof window.NodesCanvas.SliderNode) {
+                sliders.push({
+                    id: node.id,
+                    x: node.x,
+                    y: node.y,
+                    label: node.label,
+                    min: node.min,
+                    max: node.max,
+                    step: node.step,
+                    value: node.value,
+                    rounding: node.rounding,
+                    precision: node.precision,
+                });
+            }
+        });
+        return sliders;
     },
 
     _serializeConnections() {

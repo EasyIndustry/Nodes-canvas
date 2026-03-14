@@ -23,6 +23,13 @@ window.NodesCanvas.Registry = {
                     isSpecial: true, // Handled by CallDataNode class
                     icon: 'external-link',
                     editable: false
+                },
+                {
+                    id: 'n_slider',
+                    title: 'Number Slider',
+                    isSlider: true, // Handled by SliderNode class
+                    icon: 'sliders-horizontal',
+                    editable: false
                 }
             ],
             subfolders: []
@@ -204,5 +211,23 @@ window.NodesCanvas.Registry = {
             if (item.subfolders && this._deleteFromList(item.subfolders, id, 'node')) return true;
         }
         return false;
+    },
+
+    /** Ensure built-in folders contain all required nodes after loading from state */
+    syncBuiltInFolders() {
+        const dataFolder = this._findFolder(this.folders, 'f_data');
+        if (dataFolder) {
+            const hasSlider = dataFolder.nodes.some(n => n.id === 'n_slider');
+            if (!hasSlider) {
+                dataFolder.nodes.push({
+                    id: 'n_slider',
+                    title: 'Number Slider',
+                    isSlider: true,
+                    icon: 'sliders-horizontal',
+                    editable: false
+                });
+            }
+        }
+        this._notify();
     }
 };

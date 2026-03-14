@@ -17,6 +17,8 @@ window.NodesCanvas.NodeFactory = {
             return new window.NodesCanvas.ManualDataNode(config);
         } else if (nodeTemplate.id === 'n_call_data' || nodeTemplate.isSpecial === 'call-data') {
             return new window.NodesCanvas.CallDataNode(config);
+        } else if (nodeTemplate.id === 'n_slider' || nodeTemplate.isSlider) {
+            return new window.NodesCanvas.SliderNode(config);
         } else if (config.isSpecial && config.className && window.NodesCanvas[config.className]) {
             return new window.NodesCanvas[config.className](config);
         } else {
@@ -42,6 +44,17 @@ window.NodesCanvas.NodeFactory = {
                 id: 'n_call_data',
                 label: instance.label,
                 sourceId: instance.sourceId
+            };
+        } else if (instance instanceof window.NodesCanvas.SliderNode) {
+            config = {
+                id: 'n_slider',
+                label: instance.label,
+                min: instance.min,
+                max: instance.max,
+                step: instance.step,
+                value: instance.value,
+                rounding: instance.rounding,
+                precision: instance.precision
             };
         } else {
             config = {

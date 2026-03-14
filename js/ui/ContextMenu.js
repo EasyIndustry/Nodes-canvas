@@ -67,6 +67,7 @@ window.NodesCanvas.ContextMenu = class {
             // Check if it's a Panel Node — add Array Mode toggle
             const clickedEl = document.getElementById(contextId);
             const isPanel = clickedEl && clickedEl.classList.contains('panel-node');
+            const isSlider = clickedEl && clickedEl.classList.contains('slider-node');
 
             if (isPanel) {
                 itemsHTML = `
@@ -78,6 +79,18 @@ window.NodesCanvas.ContextMenu = class {
                     </div>
                     <div class="context-menu-divider"></div>
                     <div class="context-menu-item" data-action="deleteNode" style="color:#ff4757;">Delete Panel</div>
+                `;
+            } else if (isSlider) {
+                itemsHTML = `
+                    <div class="context-menu-item" data-action="editSlider">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        Edit
+                    </div>
+                    <div class="context-menu-divider"></div>
+                    <div class="context-menu-item" data-action="deleteNode" style="color:#ff4757;">Delete Slider</div>
                 `;
             } else {
                 itemsHTML = `<div class="context-menu-item" data-action="deleteNode">Delete Node</div>`;
@@ -143,6 +156,14 @@ window.NodesCanvas.ContextMenu = class {
                         panel.arrayMode = !panel.arrayMode;
                         panel.render();
                     }
+                }
+                break;
+            }
+            case 'editSlider': {
+                const sliderId = this.targetContext.id;
+                const inst = window.NodesCanvas._nodeInstances[sliderId];
+                if (inst && inst.openSettings) {
+                    inst.openSettings();
                 }
                 break;
             }
