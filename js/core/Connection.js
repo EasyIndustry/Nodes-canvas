@@ -119,6 +119,12 @@ window.NodesCanvas.ConnectionManager = {
                     });
 
                     this.isDrawing = false;
+
+                    // Trigger refresh
+                    if (window.NodesCanvas.CanvasState) window.NodesCanvas.CanvasState.scheduleSave();
+                    if (window.NodesCanvas.CodeInspector && window.NodesCanvas.CodeInspector._isOpen) {
+                        window.NodesCanvas.CodeInspector.refresh();
+                    }
                     return;
                 }
 
@@ -162,6 +168,12 @@ window.NodesCanvas.ConnectionManager = {
 
                         const newConn = new window.NodesCanvas.Connection(sourceNodeId, sourcePortId, targetNodeId, targetPortId);
                         this.connections.push(newConn);
+
+                        // Trigger refresh
+                        if (window.NodesCanvas.CanvasState) window.NodesCanvas.CanvasState.scheduleSave();
+                        if (window.NodesCanvas.CodeInspector && window.NodesCanvas.CodeInspector._isOpen) {
+                            window.NodesCanvas.CodeInspector.refresh();
+                        }
                     }
                 }
             }
