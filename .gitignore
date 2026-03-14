@@ -1,0 +1,16 @@
+# Local images folder
+images/
+
+# IDE files
+.gemini/
+.agents/
+.agent/
+_agents/
+_agent/
+
+# Logs
+*.log
+node_modules/
+dist/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,676 @@
+/* node.css - Styles for individual Node components */
+
+.node {
+    position: absolute;
+    width: max-content;
+    /* Shrinks to fit content */
+    min-width: 140px;
+    max-width: 340px;
+    min-height: unset;
+
+    /* Aesthetics */
+    background-color: var(--node-bg);
+    border: 1px solid var(--node-border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+
+    display: flex;
+    flex-direction: column;
+
+    user-select: none;
+    cursor: default;
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.node.selected {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.3), var(--shadow-md);
+    z-index: 100;
+    /* Bring to front when selected */
+}
+
+.node.dragging {
+    opacity: 0.9;
+    box-shadow: var(--shadow-lg);
+}
+
+.node-header {
+    height: 40px;
+    background-color: var(--node-header);
+    border-top-left-radius: 11px;
+    border-top-right-radius: 11px;
+    border-bottom: 1px solid var(--node-border);
+
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    cursor: grab;
+
+    font-weight: 500;
+    font-size: 14px;
+    color: #fff;
+}
+
+.node-header:active {
+    cursor: grabbing;
+}
+
+.node-header-icon {
+    margin-right: 8px;
+    color: var(--accent-color);
+    display: flex;
+    align-items: center;
+}
+
+.node-body {
+    flex: 1;
+    padding: 10px 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    /* gap between input and output columns */
+    min-height: 32px;
+}
+
+.node-ports-in,
+.node-ports-out {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.node-ports-in {
+    align-items: flex-start;
+}
+
+.node-ports-out {
+    align-items: flex-end;
+}
+
+/* Port / Socket Container */
+.port {
+    display: flex;
+    align-items: center;
+    height: 24px;
+    position: relative;
+}
+
+.port-label {
+    font-size: 12px;
+    color: #aaa;
+}
+
+.port.in .port-label {
+    margin-left: 12px;
+}
+
+.port.out .port-label {
+    margin-right: 12px;
+}
+
+/* The actual connection circle */
+.socket {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-color: var(--socket-fill);
+    border: 2px solid var(--socket-border);
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: crosshair;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.socket:hover {
+    border-color: var(--accent-color);
+    background-color: #fff;
+    transform: translateY(-50%) scale(1.2);
+}
+
+.port.in .socket {
+    left: -7px;
+}
+
+.port.out .socket {
+    right: -7px;
+}
+
+/* ============================================================
+   Panel Node - Grasshopper-style inline data writer
+   ============================================================ */
+
+.panel-node {
+    width: auto;
+    min-width: 180px;
+    max-width: 300px;
+    min-height: unset;
+    border-color: var(--accent-color);
+}
+
+.panel-header {
+    height: 32px;
+    padding: 0 8px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: var(--node-header);
+    /* Same as normal node */
+    border-bottom: 2px solid var(--accent-color);
+    cursor: grab;
+    border-radius: 11px 11px 0 0;
+}
+
+.panel-accent-strip {
+    width: 3px;
+    height: 16px;
+    background: var(--accent-color);
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.panel-label-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--accent-color);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    flex-grow: 1;
+    outline: none;
+    cursor: text;
+}
+
+.panel-label-display {
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: 0.3px;
+    opacity: 0.9;
+}
+
+.panel-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.panel-const-toggle {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #ffd700;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 5px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+}
+
+.panel-const-toggle:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.panel-edit-name-btn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    transition: color 0.2s;
+}
+
+.panel-edit-name-btn:hover {
+    color: #fff;
+}
+
+.panel-label-input:focus {
+    opacity: 1;
+}
+
+.panel-controls {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.panel-array-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 3px 5px;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+.panel-array-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.panel-array-btn.active {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: #fff;
+}
+
+.panel-body {
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.panel-textarea {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--glass-border);
+    color: var(--node-text);
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-family: 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 13px;
+    resize: vertical;
+    outline: none;
+    min-height: 36px;
+    line-height: 1.5;
+    transition: border-color 0.2s;
+    /* textarea must allow text selection */
+    user-select: text;
+    cursor: text;
+}
+
+.panel-textarea:focus {
+    border-color: var(--accent-color);
+}
+
+.panel-type-badge {
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    align-self: flex-start;
+    opacity: 0.85;
+}
+
+/* Type color coding */
+.panel-type-text {
+    background: rgba(200, 200, 200, 0.15);
+    color: #ccc;
+}
+
+.panel-type-number {
+    background: rgba(0, 220, 130, 0.2);
+    color: #00dc82;
+}
+
+.panel-type-boolean {
+    background: rgba(255, 165, 0, 0.2);
+    color: #ffa500;
+}
+
+.panel-type-array {
+    background: rgba(130, 80, 255, 0.2);
+    color: #9b5ff0;
+}
+
+.panel-type-object {
+    background: rgba(255, 71, 87, 0.2);
+    color: #ff4757;
+}
+
+
+/* ============================================================
+   Execution Visuals
+   ============================================================ */
+
+/* Value badge on output sockets */
+.socket-value-badge {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.75);
+    color: #00dc82;
+    font-family: 'Fira Code', monospace;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 220, 130, 0.3);
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 10;
+}
+
+/* Node with execution error */
+.node-error {
+    border-color: #ff4757 !important;
+    box-shadow: 0 0 0 2px rgba(255, 71, 87, 0.4) !important;
+}
+
+/* Node currently executing in debug */
+.node-debug-current {
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.4) !important;
+}
+
+/* Debug overlay (floating above each node in debug mode) */
+.debug-overlay {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(10, 10, 20, 0.85);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    border-radius: 6px;
+    padding: 3px 6px;
+    z-index: 900;
+    pointer-events: all;
+    font-size: 11px;
+    color: #ccc;
+    white-space: nowrap;
+}
+
+.debug-overlay.dbg-done {
+    border-color: rgba(0, 220, 130, 0.4);
+    color: #00dc82;
+}
+
+.debug-overlay.dbg-current {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+.debug-overlay.dbg-breakpoint .dbg-bp-btn {
+    color: #ff4757;
+}
+
+.dbg-bp-btn,
+.dbg-step-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+    font-size: 11px;
+    padding: 1px 3px;
+    border-radius: 3px;
+    opacity: 0.7;
+    transition: opacity 0.15s;
+}
+
+.dbg-bp-btn:hover,
+.dbg-step-btn:hover {
+    opacity: 1;
+}
+
+.dbg-step-num {
+    opacity: 0.5;
+    font-size: 10px;
+}
+
+/* Debug toolbar (fixed bottom-center during debug mode) */
+#debug-toolbar {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10, 10, 20, 0.92);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(245, 158, 11, 0.5);
+    border-radius: 20px;
+    padding: 6px 14px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    z-index: 1100;
+}
+
+#debug-toolbar button {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: #f59e0b;
+    border-radius: 12px;
+    padding: 4px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: inherit;
+    transition: background 0.15s;
+}
+
+#debug-toolbar button:hover {
+    background: rgba(245, 158, 11, 0.3);
+}
+
+/* --- Icon Picker --- */
+.icon-picker-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+.icon-search-input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #fff;
+    font-size: 13px;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.icon-search-input:focus {
+    border-color: #3b82f6;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.icon-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(32px, 1fr));
+    gap: 6px;
+    max-height: 180px;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+}
+
+.icon-pick-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: #aaa;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.icon-pick-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.icon-pick-btn.selected {
+    background: #3b82f6;
+    color: #fff;
+    border-color: #60a5fa;
+}
+
+/* Light Theme overrides for picker */
+body.light-theme .icon-search-input {
+    background: #fff;
+    color: #333;
+    border-color: #ccc;
+}
+
+body.light-theme .icon-picker-grid {
+    background: #f5f5f5;
+    border-color: #ddd;
+}
+
+body.light-theme .icon-pick-btn {
+    background: #fff;
+    color: #666;
+    border-color: #eee;
+}
+
+body.light-theme .icon-pick-btn:hover {
+    background: #eee;
+    color: #000;
+}
+
+body.light-theme .icon-pick-btn.selected {
+    background: #3b82f6;
+    color: #fff;
+}
+
+/* Call Data Node Specialized Styles */
+.call-data-node {
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.call-header {
+    background: rgba(0, 122, 255, 0.15);
+    border-bottom: 1px solid rgba(0, 122, 255, 0.2);
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.call-icon {
+    color: #4da6ff;
+    display: flex;
+    align-items: center;
+}
+
+.call-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #4da6ff;
+}
+
+.call-body {
+    padding: 12px;
+}
+
+.call-select {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    color: var(--node-text);
+    padding: 6px;
+    border-radius: 6px;
+    font-size: 12px;
+    outline: none;
+    cursor: pointer;
+}
+
+.call-select optgroup {
+    background: #1e1e2d;
+    color: #888;
+    font-size: 10px;
+}
+
+.call-select option {
+    background: #1e1e2d;
+    color: #eee;
+}
+
+/* Light Theme Call Data */
+body.light-theme .call-header {
+    background: rgba(0, 122, 255, 0.08);
+    border-bottom-color: rgba(0, 122, 255, 0.1);
+}
+
+body.light-theme .call-title,
+body.light-theme .call-icon {
+    color: #007aff;
+}
+
+body.light-theme .call-select {
+    background: #fff;
+    border-color: #ddd;
+    color: #333;
+}
+
+body.light-theme .call-select optgroup,
+body.light-theme .call-select option {
+    background: #fff;
+    color: #333;
+}
+
+/* Light Theme Manual Data fixes */
+body.light-theme .panel-label-display,
+body.light-theme .panel-label-input,
+body.light-theme .panel-textarea {
+    color: #222 !important;
+}
+
+body.light-theme .panel-textarea {
+    background: #fff;
+    border-color: #ccc;
+}
+
+body.light-theme .panel-header-actions button {
+    color: #444;
+}
+
+body.light-theme .panel-header-actions button:hover {
+    color: #000;
+}
+
+body.light-theme .panel-type-text {
+    background: rgba(0, 0, 0, 0.05);
+    color: #666;
+}
+
+body.light-theme .panel-type-number {
+    background: rgba(0, 180, 100, 0.1);
+    color: #008f5d;
+}
+
+body.light-theme .panel-type-boolean {
+    background: rgba(255, 140, 0, 0.1);
+    color: #d47a00;
+}
+
+body.light-theme .panel-type-array {
+    background: rgba(130, 80, 255, 0.1);
+    color: #7236d3;
+}
+
+body.light-theme .panel-type-object {
+    background: rgba(255, 71, 87, 0.1);
+    color: #d63031;
+}

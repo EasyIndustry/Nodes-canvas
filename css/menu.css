@@ -1,0 +1,146 @@
+/* menu.css - Bottom floating toolbar */
+
+.bottom-menu {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    gap: 8px;
+
+    z-index: 1000;
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.menu-btn {
+    background: transparent;
+    border: none;
+    color: #a0a0a0;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.menu-btn:hover {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.menu-btn.active {
+    color: #fff;
+    background-color: var(--accent-color);
+}
+
+.menu-btn:active {
+    transform: scale(0.95);
+}
+
+.menu-separator {
+    width: 1px;
+    height: 24px;
+    background-color: var(--glass-border);
+    margin: 0 4px;
+}
+
+/* Bottom Dropdown Menu */
+.bottom-dropdown {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+    min-width: 160px;
+    display: none;
+    flex-direction: column;
+    padding: 8px 0;
+}
+
+.bottom-dropdown.visible {
+    display: flex;
+}
+
+.dropdown-item {
+    padding: 8px 16px;
+    color: var(--node-text);
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dropdown-item:hover {
+    background-color: var(--accent-color);
+    color: #fff;
+}
+
+/* Submenu (Opens laterally) */
+.dropdown-submenu {
+    position: absolute;
+    bottom: 0px;
+    left: 100%;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+    min-width: 160px;
+    display: none;
+    flex-direction: column;
+    padding: 8px 0;
+}
+
+.dropdown-item:hover>.dropdown-submenu {
+    display: flex;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background-color: var(--glass-border);
+    margin: 4px 0;
+}
+
+/* Run / Debug mode buttons */
+.menu-btn-run {
+    color: #00dc82;
+}
+
+.menu-btn-run:hover {
+    background-color: rgba(0, 220, 130, 0.15) !important;
+    color: #00dc82 !important;
+}
+
+.menu-btn-run.active {
+    background-color: #00dc82 !important;
+    color: #000 !important;
+}
+
+.menu-btn-debug {
+    color: #f59e0b;
+}
+
+.menu-btn-debug:hover {
+    background-color: rgba(245, 158, 11, 0.15) !important;
+    color: #f59e0b !important;
+}
+
+.menu-btn-debug.active {
+    background-color: #f59e0b !important;
+    color: #000 !important;
+}

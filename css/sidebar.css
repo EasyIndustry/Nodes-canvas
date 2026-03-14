@@ -1,0 +1,232 @@
+/* sidebar.css - Left Sidebar TreeView */
+
+.sidebar {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    width: 250px;
+    height: calc(100vh - 40px);
+    z-index: 1000;
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar.closed {
+    transform: translateX(-120%);
+}
+
+.sidebar-toggle-btn {
+    position: absolute;
+    top: 20px;
+    right: -48px;
+    width: 48px;
+    height: 64px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--accent-color);
+    border-left: none;
+    border-radius: 0 32px 32px 0;
+    /* Fully rounded on the right */
+    color: var(--accent-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 2px 0 10px rgba(0, 122, 255, 0.3);
+    transition: all 0.2s;
+}
+
+.sidebar-toggle-btn svg {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: rotate(180deg);
+    /* Points Left (<) when Open */
+}
+
+.sidebar-toggle-btn:hover {
+    background: var(--accent-color);
+    color: #fff;
+    width: 54px;
+}
+
+.sidebar.closed .sidebar-toggle-btn svg {
+    transform: rotate(0deg);
+    /* Points Right (>) when Closed */
+}
+
+.sidebar-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 16px;
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--glass-border);
+    margin-bottom: 12px;
+}
+
+.sidebar-header h3 {
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0;
+}
+
+.icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--node-text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.icon-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+body.light-theme .icon-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* Built-ins section */
+.tree-builtins-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #666;
+    padding: 0 8px 4px;
+    font-weight: 600;
+}
+
+.tree-builtin-item {
+    color: var(--accent-color) !important;
+}
+
+.tree-builtin-badge {
+    font-size: 9px;
+    text-transform: uppercase;
+    background: rgba(0, 122, 255, 0.15);
+    color: var(--accent-color);
+    border-radius: 6px;
+    padding: 2px 6px;
+    font-weight: bold;
+    letter-spacing: 0.4px;
+}
+
+/* TreeView */
+.treeview {
+    flex: 1;
+    overflow-y: auto;
+    font-size: 14px;
+}
+
+/* Scrollbar hiding for treeview */
+.treeview::-webkit-scrollbar {
+    width: 4px;
+}
+
+.treeview::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+body.light-theme .treeview::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.tree-folder {
+    margin-bottom: 4px;
+}
+
+.tree-folder-header {
+    display: flex;
+    align-items: center;
+    padding: 6px 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.tree-folder-header:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+body.light-theme .tree-folder-header:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.folder-icon {
+    margin-right: 8px;
+    color: var(--accent-color);
+}
+
+.tree-folder-content {
+    margin-left: 20px;
+    border-left: 1px dashed var(--glass-border);
+    padding-left: 8px;
+    display: none;
+}
+
+.tree-folder.open .tree-folder-content {
+    display: block;
+}
+
+.tree-node-item {
+    padding: 6px 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    color: #bbb;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+body.light-theme .tree-node-item {
+    color: #555;
+}
+
+.tree-node-item:hover,
+.add-subfolder-btn:hover,
+.edit-folder-btn:hover {
+    background: var(--accent-color);
+    color: #fff;
+    opacity: 1 !important;
+}
+
+.folder-icon {
+    margin-right: 8px;
+    color: var(--accent-color);
+    transition: transform 0.2s;
+}
+
+.tree-folder.open>.tree-folder-header .folder-icon svg {
+    transform: rotate(90deg);
+}
+
+.tree-folder-header {
+    display: flex;
+    align-items: center;
+    padding: 6px 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.2s, box-shadow 0.2s;
+}
+
+.tree-folder-header:hover {
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: inset 2px 0 0 var(--accent-color);
+}
+
+body.light-theme .tree-folder-header:hover {
+    background: rgba(0, 0, 0, 0.08);
+    box-shadow: inset 2px 0 0 var(--accent-color);
+}

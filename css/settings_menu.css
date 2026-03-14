@@ -1,0 +1,191 @@
+/* Settings Button */
+.settings-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 44px;
+    height: 44px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 50%;
+    color: var(--node-text);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 1000;
+    transition: transform 0.3s ease, background-color 0.2s;
+}
+
+.settings-btn:hover {
+    transform: rotate(45deg);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Light Theme Variables */
+body.light-theme {
+    --bg-dark: #f0f4f8;
+    --bg-canvas: #fafafa;
+    --grid-line: rgba(0, 0, 0, 0.05);
+
+    --node-bg: rgba(255, 255, 255, 0.95);
+    --node-border: rgba(0, 0, 0, 0.1);
+    --node-header: #e0e0e0;
+    --node-text: #333;
+
+    --socket-fill: #f0f0f0;
+    --socket-border: #999;
+
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(0, 0, 0, 0.1);
+}
+
+body.light-theme .node-header {
+    color: #333;
+}
+
+body.light-theme .settings-btn:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+body.light-theme .menu-btn {
+    color: #555;
+}
+
+body.light-theme .menu-btn:hover {
+    color: #000;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+body.light-theme .menu-btn.active {
+    color: #fff;
+    background-color: var(--accent-color);
+}
+
+/* Context Menu */
+.context-menu {
+    position: fixed;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    box-shadow: var(--shadow-md);
+    min-width: 150px;
+    padding: 8px 0;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+}
+
+.context-menu-item {
+    padding: 8px 16px;
+    color: var(--node-text);
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.context-menu-item:hover {
+    background-color: var(--accent-color);
+    color: #fff;
+}
+
+.context-menu-divider {
+    height: 1px;
+    background-color: var(--glass-border);
+    margin: 4px 0;
+}
+
+/* Settings Dropdown */
+.settings-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2000;
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.settings-container.pushed {
+    transform: translateX(-420px);
+}
+
+.settings-btn {
+    position: relative;
+    top: 0;
+    right: 0;
+}
+
+.settings-dropdown {
+    position: absolute;
+    top: 50px;
+    right: 0;
+    min-width: 180px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: opacity 0.2s, transform 0.2s;
+    transform-origin: top right;
+}
+
+.settings-dropdown.hidden {
+    opacity: 0;
+    transform: scale(0.95);
+    pointer-events: none;
+}
+
+.settings-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--node-text);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 4px 0;
+}
+
+.settings-divider {
+    height: 1px;
+    background: var(--glass-border);
+    margin: 4px 0;
+}
+
+.settings-item-danger {
+    color: #ff4757;
+    justify-content: flex-start;
+    gap: 0;
+}
+
+.settings-item-danger:hover {
+    color: #ff6b78;
+}
+
+/* Custom Toggle Switch for Dark Mode */
+.toggle-switch {
+    width: 36px;
+    height: 20px;
+    background-color: var(--socket-fill);
+    border-radius: 10px;
+    border: 1px solid var(--socket-border);
+    position: relative;
+    transition: all 0.2s;
+}
+
+.toggle-switch::after {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    background-color: var(--accent-color);
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.toggle-switch.right::after {
+    transform: translateX(16px);
+    background-color: #555;
+    /* Dark color for light mode indicator */
+}

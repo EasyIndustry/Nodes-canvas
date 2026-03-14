@@ -1,0 +1,307 @@
+/* popup.css - Styles for Search and Form Modals */
+
+.popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 3000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+.popup-overlay.active {
+    display: flex;
+}
+
+/* Glassmorphism modal */
+.glass-modal {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    color: var(--node-text);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- Search Popup --- */
+.search-popup {
+    position: fixed;
+    /* Absolute based on double click coords */
+    width: 300px;
+    max-height: 400px;
+    z-index: 2500;
+}
+
+.search-input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--glass-border);
+    color: var(--node-text);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    margin-bottom: 10px;
+    transition: border-color 0.2s;
+}
+
+.search-input:focus {
+    border-color: var(--accent-color);
+}
+
+.search-results {
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.search-group {
+    margin-bottom: 8px;
+}
+
+.search-group-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #888;
+    margin-bottom: 4px;
+    padding-left: 4px;
+}
+
+.search-item {
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    transition: background 0.2s;
+}
+
+.search-item:hover {
+    background: var(--accent-color);
+    color: #fff;
+}
+
+/* --- Node Form Modal --- */
+.node-form-modal {
+    width: 600px;
+    max-height: 85vh;
+}
+
+.node-form-header {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    opacity: 0.6;
+}
+
+.close-btn:hover {
+    opacity: 1;
+    color: #ff4757;
+}
+
+.node-form-content {
+    overflow-y: auto;
+    padding-right: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Collapsible Zones */
+.form-zone {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+body.light-theme .form-zone {
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.zone-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    cursor: pointer;
+    margin-bottom: 12px;
+    color: var(--accent-color);
+}
+
+.zone-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.form-zone.collapsed .zone-content {
+    display: none;
+}
+
+.form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.form-row label {
+    font-size: 12px;
+    color: #aaa;
+}
+
+.form-row input,
+.form-row select,
+.form-row textarea {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--glass-border);
+    color: var(--node-text);
+    padding: 8px;
+    border-radius: 4px;
+    outline: none;
+    font-family: inherit;
+}
+
+/* Parameters Dual Column */
+.params-container {
+    display: flex;
+    gap: 16px;
+}
+
+.param-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.1);
+    padding: 8px;
+    border-radius: 6px;
+}
+
+.param-item {
+    display: flex;
+    align-items: center;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    padding: 4px 8px;
+    border-radius: 4px;
+    gap: 8px;
+}
+
+.param-item input {
+    flex-grow: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid transparent;
+    color: inherit;
+    outline: none;
+    font-size: 13px;
+    transition: border-color 0.2s;
+}
+
+.param-item input:focus {
+    border-bottom: 1px solid var(--accent-color);
+}
+
+.param-item .remove-param {
+    cursor: pointer;
+    opacity: 0.5;
+    color: #ff4757;
+}
+
+.param-item .remove-param:hover {
+    opacity: 1;
+}
+
+.add-param-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px dashed var(--glass-border);
+    color: var(--node-text);
+    padding: 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 12px;
+    transition: background 0.2s;
+}
+
+.add-param-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--accent-color);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.btn-primary,
+.btn-secondary {
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    border: none;
+}
+
+.btn-primary {
+    background: var(--accent-color);
+    color: white;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--node-text);
+}
+
+/* Icon Picker */
+.icon-picker-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.icon-pick-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 6px;
+    color: var(--node-text);
+    padding: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+
+.icon-pick-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+.icon-pick-btn.selected {
+    background: rgba(0, 122, 255, 0.2);
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}

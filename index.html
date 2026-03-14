@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nodes Canvas Studio</title>
+
+    <!-- CSS Dependencies -->
+    <link rel="stylesheet" href="./css/main.css">
+    <link rel="stylesheet" href="./css/canvas.css">
+    <link rel="stylesheet" href="./css/node.css">
+    <link rel="stylesheet" href="./css/menu.css">
+    <link rel="stylesheet" href="./css/settings_menu.css">
+    <link rel="stylesheet" href="./css/sidebar.css">
+    <link rel="stylesheet" href="./css/popup.css">
+    <link rel="stylesheet" href="./css/code_inspector.css">
+</head>
+
+<body>
+    <!-- Main Canvas Area -->
+    <div id="canvas-container" class="canvas-container">
+        <div id="canvas-layer" class="canvas-layer">
+            <!-- Nodes and Connections will be injected here -->
+            <svg id="connections-layer" class="connections-layer"></svg>
+        </div>
+    </div>
+
+    <!-- Settings Dropdown (Top Right) -->
+    <div class="settings-container">
+        <button id="btn-settings" class="settings-btn glass-panel" title="Settings">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3" />
+                <path
+                    d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l-.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
+            </svg>
+        </button>
+        <div id="settings-dropdown" class="settings-dropdown glass-panel hidden">
+            <div class="settings-item" id="toggle-theme">
+                <span>Dark Mode</span>
+                <div class="toggle-switch left"></div>
+            </div>
+            <div class="settings-divider"></div>
+            <div class="settings-item settings-item-danger" id="btn-clear-cache">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    style="margin-right:8px;">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14H6L5 6" />
+                    <path d="M10 11v6" />
+                    <path d="M14 11v6" />
+                    <path d="M9 6V4h6v2" />
+                </svg>
+                <span>Clear Canvas</span>
+            </div>
+            <div class="settings-divider"></div>
+            <div class="settings-item" id="btn-export-js">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    style="margin-right:8px;">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                <span>View Code</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Code Inspector Panel (Right Side) -->
+    <div id="code-inspector" class="code-inspector ci-hidden">
+        <div class="ci-header">
+            <span class="ci-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    style="margin-right:6px;">
+                    <polyline points="16 18 22 12 16 6" />
+                    <polyline points="8 6 2 12 8 18" />
+                </svg>
+                Code Inspector
+            </span>
+            <div class="ci-actions">
+                <button id="code-inspector-refresh" class="ci-btn" title="Regenerate">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23 4 23 10 17 10" />
+                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                    </svg>
+                </button>
+                <button id="code-inspector-download" class="ci-btn ci-btn-primary" title="Download .js">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    Download .js
+                </button>
+                <button id="code-inspector-close" class="ci-btn" title="Close">&times;</button>
+            </div>
+        </div>
+        <pre id="code-inspector-content" class="ci-code"></pre>
+    </div>
+
+    <!-- Left Sidebar (Treeview) -->
+    <div id="left-sidebar" class="sidebar glass-panel closed">
+        <button id="btn-toggle-sidebar" class="sidebar-toggle-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 18l6-6-6-6" />
+            </svg>
+        </button>
+        <div class="sidebar-content">
+            <div class="sidebar-header">
+                <h3>Library</h3>
+                <button id="btn-add-folder" class="icon-btn" title="Add Folder"><svg width="16" height="16"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                        <line x1="12" y1="11" x2="12" y2="17" />
+                        <line x1="9" y1="14" x2="15" y2="14" />
+                    </svg></button>
+            </div>
+            <div id="treeview-container" class="treeview">
+                <!-- Folders and Node Types will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Bottom Menu -->
+    <div id="bottom-menu" class="bottom-menu glass-panel">
+        <button id="btn-select" class="menu-btn active" title="Select Tool">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" />
+            </svg>
+        </button>
+        <div class="menu-separator"></div>
+        <button id="btn-add-node" class="menu-btn" title="Add Node">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <line x1="12" y1="8" x2="12" y2="16" />
+                <line x1="8" y1="12" x2="16" y2="12" />
+            </svg>
+        </button>
+        <div class="menu-separator"></div>
+        <!-- Run Mode -->
+        <!-- Run Mode -->
+        <button id="btn-run" class="menu-btn menu-btn-run" title="Run Mode — executes continuously like Grasshopper">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <polygon points="5,3 19,12 5,21" />
+            </svg>
+        </button>
+        <!-- Debug Mode -->
+        <button id="btn-debug" class="menu-btn menu-btn-debug" title="Debug Mode — step through with breakpoints">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <!-- Play arrow -->
+                <polygon points="4,4 14,12 4,20" fill="currentColor" stroke="none" />
+                <!-- Bug antenna left -->
+                <line x1="16" y1="6" x2="20" y2="3" />
+                <!-- Bug antenna right -->
+                <line x1="16" y1="10" x2="21" y2="9" />
+                <!-- Bug body -->
+                <ellipse cx="18" cy="14" rx="3" ry="4" />
+                <!-- Bug legs -->
+                <line x1="15" y1="12" x2="12" y2="11" />
+                <line x1="15" y1="15" x2="12" y2="15" />
+                <line x1="15" y1="18" x2="12" y2="19" />
+                <line x1="21" y1="12" x2="24" y2="11" />
+                <line x1="21" y1="15" x2="24" y2="15" />
+                <line x1="21" y1="18" x2="24" y2="19" />
+            </svg>
+        </button>
+    </div>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Monaco Editor via CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+    <script>
+        // Configure the Monaco AMD path so it can load its own workers
+        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
+        window.monacoReady = new Promise(resolve => {
+            require(['vs/editor/editor.main'], () => resolve(window.monaco));
+        });
+    </script>
+
+    <!-- JS Dependencies (Loaded in order for Global Namespace Architecture) -->
+    <script src="./js/core/NodeIcons.js"></script>
+    <script src="./js/core/NodeFactory.js"></script>
+    <script src="./js/core/Canvas.js"></script>
+    <script src="./js/core/Node.js"></script>
+    <script src="./js/core/ManualDataNode.js"></script>
+    <script src="./js/core/CallDataNode.js"></script>
+    <script src="./js/core/Connection.js"></script>
+    <script src="./js/core/Registry.js"></script>
+    <script src="./js/core/CanvasState.js"></script>
+    <script src="./js/core/GraphEngine.js"></script>
+    <script src="./js/ui/PopupManager.js"></script>
+    <script src="./js/ui/BottomMenu.js"></script>
+    <script src="./js/ui/ContextMenu.js"></script>
+    <script src="./js/ui/Settings.js"></script>
+    <script src="./js/ui/Sidebar.js"></script>
+    <script src="./js/ui/CodeInspector.js"></script>
+    <script src="./js/app.js"></script>
+</body>
+
+</html>

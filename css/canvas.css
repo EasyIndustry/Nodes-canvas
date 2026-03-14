@@ -1,0 +1,67 @@
+/* canvas.css - Infinite canvas area styles */
+
+.canvas-container {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+    cursor: default;
+
+    /* Background Pattern - Grid */
+    background-color: var(--bg-canvas);
+    background-image:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 50px 50px;
+    background-position: 0 0;
+}
+
+/* We don't use :active for grabbing anymore because MMB controls it via JS inline style */
+
+.canvas-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform-origin: 0 0;
+    /* transition: transform 0.05s linear; remove for smooth pan, keep for smooth zoom if needed but usually better handled in JS */
+}
+
+/* SVG layer for drawing bezier curves */
+.connections-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    /* Let clicks pass through to nodes/canvas */
+    overflow: visible;
+}
+
+/* Connection Path Styles */
+.connection-path {
+    fill: none;
+    stroke: #666;
+    stroke-width: 3px;
+    transition: stroke 0.2s;
+    pointer-events: stroke;
+    /* Allows clicking directly on the SVG line to delete it */
+    cursor: pointer;
+}
+
+.connection-path:hover,
+.connection-path.selected {
+    stroke: var(--accent-color);
+    stroke-width: 4px;
+}
+
+/* Marquee Selection Box */
+.selection-box {
+    position: fixed;
+    background-color: rgba(0, 122, 255, 0.2);
+    border: 1px solid rgba(0, 122, 255, 0.8);
+    pointer-events: none;
+    z-index: 9999;
+}

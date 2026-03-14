@@ -1,0 +1,53 @@
+/* main.css - Core variables and resets */
+:root {
+    /* Color Palette */
+    --bg-dark: #121212;
+    --bg-canvas: #1e1e1e;
+    --grid-line: rgba(255, 255, 255, 0.05);
+    
+    --node-bg: rgba(30, 30, 30, 0.85);
+    --node-border: rgba(255, 255, 255, 0.1);
+    --node-header: rgba(45, 45, 45, 0.9);
+    --node-text: #e0e0e0;
+    
+    --socket-fill: #1e1e1e;
+    --socket-border: #888;
+    --socket-active: #4a90e2;
+    
+    --accent-color: #007aff; /* iOS like blue */
+    --accent-hover: #005bb5;
+    
+    --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 10px 20px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.5);
+
+    /* Glassmorphism */
+    --glass-bg: rgba(25, 25, 25, 0.65);
+    --glass-border: rgba(255, 255, 255, 0.08);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none; /* Prevent text selection while dragging */
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--node-text);
+    overflow: hidden; /* Hide scrollbars, we use infinite canvas pan */
+    width: 100vw;
+    height: 100vh;
+}
+
+/* Utilities */
+.glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+}
