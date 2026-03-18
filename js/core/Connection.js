@@ -66,8 +66,12 @@ window.NodesCanvas.Connection = class {
 
         // Create a bezier curve string
         // The control points are placed horizontally based on the distance between nodes
-        const distance = Math.abs(pt2.x - pt1.x);
-        const curveTightness = Math.max(100, distance / 2); // Avoid too tight curves when nodes are close
+        const dx = Math.abs(pt2.x - pt1.x);
+        const dy = Math.abs(pt2.y - pt1.y);
+
+        // Multiplier that increases curve based on horizontal distance
+        // but also accounts for vertical distance to avoid "flat" lines when far but vertical
+        const curveTightness = Math.min(200, Math.max(50, dx * 0.5 + dy * 0.1));
 
         const cp1 = { x: pt1.x + curveTightness, y: pt1.y };
         const cp2 = { x: pt2.x - curveTightness, y: pt2.y };
@@ -92,57 +96,68 @@ window.NodesCanvas.ConnectionManager = {
 
     init() {
         const svgLayer = document.getElementById("connections-layer");
+        if (!svgLayer) {
+            console.warn("[ConnectionManager] connections-layer not found, retrying in 500ms...");
+            setTimeout(() => this.init(), 500);
+            return;
+        }
 
-        // Temp path for drawing
+        console.log("[ConnectionManager] Initialized on layer:", svgLayer.id);
+
+        // Temp path for drawing - ensure it doesn't catch mouse events
         this.tempPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         this.tempPath.setAttribute('class', 'connection-path temp-path');
         this.tempPath.style.strokeDasharray = "5,5";
+        this.tempPath.style.pointerEvents = "none"; // CRITICAL: don't block mouseup
+        this.tempPath.style.display = 'none';
         svgLayer.appendChild(this.tempPath);
 
         // Listeners for socket dragging
         document.addEventListener('mousedown', (e) => {
-            if (e.target.classList.contains('socket')) {
-                e.preventDefault(); e.stopPropagation();
+            const socket = e.target.closest('.socket');
+            if (!socket) return;
 
-                const socket = e.target;
-                const node = socket.closest('.node');
+            console.log("[CM] Socket mousedown:", socket.dataset.portid, "Type:", socket.dataset.type);
 
-                this.isDrawing = true;
+            e.preventDefault();
+            e.stopPropagation();
 
-                // If Ctrl is held, disconnect instead of drawing
-                if (e.ctrlKey) {
-                    const socketType = socket.dataset.type;
-                    const socketId = socket.dataset.portid;
-                    const nodeId = node.id;
+            const node = socket.closest('.node');
+            if (!node) return;
 
-                    this.connections = this.connections.filter(conn => {
-                        const isMatch = (socketType === 'out' && conn.sourceNodeId === nodeId && conn.sourcePortId === socketId) ||
-                            (socketType === 'in' && conn.targetNodeId === nodeId && conn.targetPortId === socketId);
-                        if (isMatch) conn.destroy();
-                        return !isMatch;
-                    });
+            this.isDrawing = true;
 
-                    this.isDrawing = false;
+            // If Ctrl is held, disconnect instead of drawing
+            if (e.ctrlKey) {
+                const socketType = socket.dataset.type;
+                const socketId = socket.dataset.portid;
+                const nodeId = node.id;
 
-                    // Trigger refresh
-                    if (window.NodesCanvas.CanvasState) window.NodesCanvas.CanvasState.scheduleSave();
-                    if (window.NodesCanvas.CodeInspector && window.NodesCanvas.CodeInspector._isOpen) {
-                        window.NodesCanvas.CodeInspector.refresh();
-                    }
-                    return;
+                this.connections = this.connections.filter(conn => {
+                    const isMatch = (socketType === 'out' && conn.sourceNodeId === nodeId && conn.sourcePortId === socketId) ||
+                        (socketType === 'in' && conn.targetNodeId === nodeId && conn.targetPortId === socketId);
+                    if (isMatch) conn.destroy();
+                    return !isMatch;
+                });
+
+                this.isDrawing = false;
+                if (window.NodesCanvas.CanvasState) window.NodesCanvas.CanvasState.scheduleSave();
+                if (window.NodesCanvas.CodeInspector && window.NodesCanvas.CodeInspector._isOpen) {
+                    window.NodesCanvas.CodeInspector.refresh();
                 }
-
-                this.startPort = {
-                    nodeId: node.id,
-                    portId: socket.dataset.portid,
-                    type: socket.dataset.type,
-                    element: socket
-                };
-
-                // Show temp path
-                this.tempPath.style.display = 'block';
-                this.updateTempPath(e.clientX, e.clientY);
+                return;
             }
+
+            this.startPort = {
+                nodeId: node.id,
+                portId: socket.dataset.portid,
+                type: socket.dataset.type,
+                element: socket
+            };
+
+            // Show temp path
+            this.tempPath.style.display = 'block';
+            this.updateTempPath(e.clientX, e.clientY);
         });
 
         document.addEventListener('mousemove', (e) => {
@@ -152,49 +167,54 @@ window.NodesCanvas.ConnectionManager = {
         });
 
         document.addEventListener('mouseup', (e) => {
-            if (this.isDrawing) {
-                this.isDrawing = false;
-                this.tempPath.style.display = 'none';
+            if (!this.isDrawing) return;
 
-                if (e.target.classList.contains('socket')) {
-                    const endSocket = e.target;
-                    const endNode = endSocket.closest('.node');
+            console.log("[CM] Socket mouseup. Target:", e.target);
+            this.isDrawing = false;
+            this.tempPath.style.display = 'none';
 
-                    // Validate connection (in to out, different nodes, etc)
-                    if (this.startPort.nodeId !== endNode.id && this.startPort.type !== endSocket.dataset.type) {
+            const endSocket = e.target.closest('.socket');
+            if (endSocket) {
+                const endNode = endSocket.closest('.node');
 
-                        // Enforce order: source is ALWAYS out, target is ALWAYS in
-                        const isStartOut = this.startPort.type === 'out';
-                        const sourceNodeId = isStartOut ? this.startPort.nodeId : endNode.id;
-                        const sourcePortId = isStartOut ? this.startPort.portId : endSocket.dataset.portid;
-                        const targetNodeId = isStartOut ? endNode.id : this.startPort.nodeId;
-                        const targetPortId = isStartOut ? endSocket.dataset.portid : this.startPort.portId;
+                // Validate connection (in to out, different nodes, etc)
+                if (endNode && this.startPort.nodeId !== endNode.id && this.startPort.type !== endSocket.dataset.type) {
 
-                        const newConn = new window.NodesCanvas.Connection(sourceNodeId, sourcePortId, targetNodeId, targetPortId);
-                        this.connections.push(newConn);
+                    // Enforce order: source is ALWAYS out, target is ALWAYS in
+                    const isStartOut = this.startPort.type === 'out';
+                    const sourceNodeId = isStartOut ? this.startPort.nodeId : endNode.id;
+                    const sourcePortId = isStartOut ? this.startPort.portId : endSocket.dataset.portid;
+                    const targetNodeId = isStartOut ? endNode.id : this.startPort.nodeId;
+                    const targetPortId = isStartOut ? endSocket.dataset.portid : this.startPort.portId;
 
-                        // Trigger refresh
-                        if (window.NodesCanvas.CanvasState) window.NodesCanvas.CanvasState.scheduleSave();
-                        if (window.NodesCanvas.CodeInspector && window.NodesCanvas.CodeInspector._isOpen) {
-                            window.NodesCanvas.CodeInspector.refresh();
-                        }
-                        if (window.NodesCanvas.executionMode === 'run' && window.NodesCanvas.GraphEngine) {
-                            window.NodesCanvas.GraphEngine.execute();
-                        }
+                    console.log("[CM] Creating connection:", sourceNodeId + ":" + sourcePortId, "->", targetNodeId + ":" + targetPortId);
+
+                    const newConn = new window.NodesCanvas.Connection(sourceNodeId, sourcePortId, targetNodeId, targetPortId);
+                    this.connections.push(newConn);
+
+                    // Trigger refresh
+                    if (window.NodesCanvas.CanvasState) window.NodesCanvas.CanvasState.scheduleSave();
+                    if (window.NodesCanvas.CodeInspector && window.NodesCanvas.CodeInspector._isOpen) {
+                        window.NodesCanvas.CodeInspector.refresh();
+                    }
+                    if (window.NodesCanvas.executionMode === 'run' && window.NodesCanvas.GraphEngine) {
+                        window.NodesCanvas.GraphEngine.execute();
                     }
                 }
             }
+            this.startPort = null;
         });
 
         // Listen for node movements to update connections
-        // We poll for now or hook into node drag loop
-        setInterval(() => this.updateAllConnections(), 16); // ~60fps
+        setInterval(() => this.updateAllConnections(), 16);
     },
 
     updateTempPath(mouseX, mouseY) {
-        if (!this.startPort) return;
+        if (!this.startPort || !window.NodesCanvas.canvas) return;
 
         const canvasLayer = document.getElementById("canvas-layer");
+        if (!canvasLayer) return;
+
         const layerRect = canvasLayer.getBoundingClientRect();
         const scale = window.NodesCanvas.canvas.transform.scale;
 
@@ -210,8 +230,9 @@ window.NodesCanvas.ConnectionManager = {
             y: (mouseY - layerRect.top) / scale
         };
 
-        const distance = Math.abs(pt2.x - pt1.x);
-        const curveTightness = Math.max(100, distance / 2);
+        const dx = Math.abs(pt2.x - pt1.x);
+        const dy = Math.abs(pt2.y - pt1.y);
+        const curveTightness = Math.min(200, Math.max(50, dx * 0.5 + dy * 0.1));
 
         // Adjust control points based on whether starting port is IN or OUT
         const isOut = this.startPort.type === 'out';
@@ -257,6 +278,41 @@ window.NodesCanvas.ConnectionManager = {
         const newConn = new window.NodesCanvas.Connection(sourceNodeId, sourcePortId, targetNodeId, targetPortId);
         this.connections.push(newConn);
         return newConn;
+    },
+
+    /**
+     * Get serialized connection data for GraphEngine or CanvasState
+     * @returns {Array} List of connection objects
+     */
+    getConnections() {
+        return this.connections.map(c => ({
+            fromNodeId: c.sourceNodeId,
+            fromPortId: c.sourcePortId,
+            toNodeId: c.targetNodeId,
+            toPortId: c.targetPortId
+        }));
+    },
+
+    /**
+     * Restore connections from serialized data
+     * @param {Array} connectionsData 
+     */
+    restoreConnections(connectionsData) {
+        if (!connectionsData || !Array.isArray(connectionsData)) return;
+
+        // Clear existing connections first
+        this.connections.forEach(c => c.destroy());
+        this.connections = [];
+
+        connectionsData.forEach(data => {
+            const newConn = new window.NodesCanvas.Connection(
+                data.fromNodeId,
+                data.fromPortId,
+                data.toNodeId,
+                data.toPortId
+            );
+            this.connections.push(newConn);
+        });
     }
 };
 

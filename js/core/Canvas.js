@@ -137,6 +137,14 @@ window.NodesCanvas.Canvas = class {
         this.layer.style.transform = `translate(${this.transform.x}px, ${this.transform.y}px) scale(${this.transform.scale})`;
     }
 
+    setTransform(x, y, scale) {
+        this.transform.x = x || 0;
+        this.transform.y = y || 0;
+        this.transform.scale = scale || 1;
+        this.updateTransform();
+        this.updateBackgroundGrid();
+    }
+
     updateBackgroundGrid() {
         // Keeps the grid visually infinite by shifting the background position
         // This is necessary because the layer moves but the container holds the background

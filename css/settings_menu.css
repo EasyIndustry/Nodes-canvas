@@ -189,3 +189,47 @@ body.light-theme .menu-btn.active {
     background-color: #555;
     /* Dark color for light mode indicator */
 }
+/* Board Header & Save Section */
+.board-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    gap: 12px;
+}
+
+.board-name-label {
+    font-size: 13px;
+    font-family: 'Courier New', Courier, monospace;
+    color: var(--accent-color);
+    opacity: 0.9;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.save-icon-btn {
+    background: rgba(0, 220, 130, 0.1);
+    border: 1px solid rgba(0, 220, 130, 0.2);
+    color: #00dc82;
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.save-icon-btn:hover {
+    background: rgba(0, 220, 130, 0.2);
+    border-color: #00dc82;
+    transform: scale(1.05);
+}
+
+.save-icon-btn i, .save-icon-btn svg {
+    width: 16px;
+    height: 16px;
+}
+

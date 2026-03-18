@@ -1,44 +1,21 @@
-// Node.js - Base Class for functional Nodes
+// Node.js - Functional Node class inheriting from BaseNode
 
 window.NodesCanvas = window.NodesCanvas || {};
 
-window.NodesCanvas.Node = class {
+window.NodesCanvas.Node = class extends window.NodesCanvas.BaseNode {
     constructor(config) {
-        this.id = config.id || ('node_' + Date.now() + Math.floor(Math.random() * 1000));
-        this.x = config.x || 0;
-        this.y = config.y || 0;
-        this.title = config.title || "Generic Node";
-        this.description = config.description || '';
-        this.icon = config.icon || 'default';
+        super(config);
 
         this.inputs = config.inputs || [{ id: 'in_1', label: 'Input A' }];
         this.outputs = config.outputs || [{ id: 'out_1', label: 'Output A' }];
-
         this.code = config.code || '';
 
-        this.element = null;
-        this.isDragging = false;
-        this.dragOffsets = { x: 0, y: 0 };
-
-        this.createElement();
-        this.initEvents();
+        this.initElement("node");
+        this.renderContent();
 
         // Append to the layer
         const layer = document.getElementById("canvas-layer");
         if (layer) layer.appendChild(this.element);
-
-        // Track instance for GraphEngine
-        window.NodesCanvas._nodeInstances = window.NodesCanvas._nodeInstances || {};
-        window.NodesCanvas._nodeInstances[this.id] = this;
-    }
-
-    createElement() {
-        this.element = document.createElement("div");
-        this.element.className = "node";
-        this.element.id = this.id;
-
-        this.updatePosition();
-        this.renderContent();
     }
 
     renderContent() {
@@ -90,49 +67,17 @@ window.NodesCanvas.Node = class {
         this.element.appendChild(header);
         this.element.appendChild(body);
 
-        // We need to re-bind the header events since it was recreated
+        // Bind events via BaseNode
+        this.bindDragEvents(header);
         this.initHeaderEvents(header);
 
         // Render Lucide icons
         if (window.lucide) window.lucide.createIcons();
     }
 
-    updatePosition() {
-        this.element.style.transform = `translate(${this.x}px, ${this.y}px)`;
-    }
-
     initHeaderEvents(header) {
-        header.addEventListener('mousedown', (e) => {
-            e.stopPropagation(); // Don't trigger canvas pan
-
-            const canvasTransform = window.NodesCanvas.canvas.transform;
-
-            // Handle selection logic
-            if (!e.ctrlKey && !this.element.classList.contains('selected')) {
-                document.querySelectorAll('.node.selected').forEach(n => n.classList.remove('selected'));
-            }
-            this.element.classList.add('selected');
-
-            // Collect all nodes to drag
-            const selectedNodes = document.querySelectorAll('.node.selected');
-            selectedNodes.forEach(nodeEl => {
-                const instance = window.NodesCanvas._nodeInstances[nodeEl.id] ||
-                    window.NodesCanvas._panelInstances?.[nodeEl.id] ||
-                    window.NodesCanvas._callInstances?.[nodeEl.id];
-
-                if (instance) {
-                    instance.isDragging = true;
-                    instance.element.classList.add('dragging');
-
-                    const rect = instance.element.getBoundingClientRect();
-                    instance.dragOffsets.x = (e.clientX - rect.left) / canvasTransform.scale;
-                    instance.dragOffsets.y = (e.clientY - rect.top) / canvasTransform.scale;
-                }
-            });
-        });
-
         header.addEventListener('dblclick', (e) => {
-            e.stopPropagation(); // Avoid triggering canvas search
+            e.stopPropagation();
 
             if (window.NodesCanvas.popupManager) {
                 const config = {
@@ -160,33 +105,10 @@ window.NodesCanvas.Node = class {
                     }
 
                     // We also need to redraw connections since sockets might have moved or been removed
-                    if (window.NodesCanvas.connectionManager) {
-                        window.NodesCanvas.connectionManager.updateVisuals();
+                    if (window.NodesCanvas.ConnectionManager) {
+                        window.NodesCanvas.ConnectionManager.updateAllConnections();
                     }
                 });
-            }
-        });
-    }
-
-    initEvents() {
-        window.addEventListener('mousemove', (e) => {
-            if (!this.isDragging) return;
-
-            const canvasTransform = window.NodesCanvas.canvas.transform;
-
-            // X and Y considering the canvas current translation and scaling
-            this.x = (e.clientX - canvasTransform.x) / canvasTransform.scale - this.dragOffsets.x;
-            this.y = (e.clientY - canvasTransform.y) / canvasTransform.scale - this.dragOffsets.y;
-
-            this.updatePosition();
-
-            // TODO: dispatch 'nodeMoved' event so connections can update
-        });
-
-        window.addEventListener('mouseup', () => {
-            if (this.isDragging) {
-                this.isDragging = false;
-                this.element.classList.remove('dragging');
             }
         });
     }

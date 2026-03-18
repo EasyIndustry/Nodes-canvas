@@ -3,7 +3,11 @@ window.NodesCanvas = window.NodesCanvas || {};
 window.NodesCanvas._clipboard = []; // Global clipboard for nodes
 
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("Nodes Canvas Studio Initializing...");
+    console.log("Nodes Canvas Studio Initializing... [v1.4]");
+
+    // Verify critical components
+    const hasSetTransform = window.NodesCanvas.Canvas && window.NodesCanvas.Canvas.prototype.setTransform;
+    console.log(`[App] Canvas.setTransform verified: ${!!hasSetTransform}`);
 
     // Initialize Core Components
     const canvasContainer = document.getElementById("canvas-container");
@@ -26,10 +30,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 window.NodesCanvas.ConnectionManager.removeConnectionsByNodeId(nodeId);
             }
 
-            // 2. Clean up instances
-            delete (window.NodesCanvas._nodeInstances || {})[nodeId];
-            delete (window.NodesCanvas._panelInstances || {})[nodeId];
-            delete (window.NodesCanvas._callInstances || {})[nodeId];
+            // 2. Clean up instances via Registry
+            if (window.NodesCanvas.NodeRegistry) {
+                window.NodesCanvas.NodeRegistry.unregister(nodeId);
+            }
 
             // 3. Remove DOM
             nodeEl.remove();
@@ -62,10 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const selected = document.querySelectorAll('.node.selected');
                 window.NodesCanvas._clipboard = Array.from(selected).map(nodeEl => {
-                    const inst = window.NodesCanvas._nodeInstances[nodeEl.id] ||
-                        window.NodesCanvas._panelInstances?.[nodeEl.id] ||
-                        window.NodesCanvas._callInstances?.[nodeEl.id];
-                    return inst;
+                    return window.NodesCanvas.NodeRegistry.get(nodeEl.id);
                 }).filter(Boolean);
 
                 if (window.NodesCanvas._clipboard.length) {
@@ -94,9 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 // Update clipboard to the NEW nodes so repeat paste offsets them cumulatively
                 window.NodesCanvas._clipboard = newSelections.map(el => {
-                    return window.NodesCanvas._nodeInstances[el.id] ||
-                        window.NodesCanvas._panelInstances?.[el.id] ||
-                        window.NodesCanvas._callInstances?.[el.id];
+                    return window.NodesCanvas.NodeRegistry.get(el.id);
                 }).filter(Boolean);
 
                 window.NodesCanvas.CanvasState.scheduleSave();
@@ -128,8 +127,17 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // 5. Restore saved board if it exists
-    const restored = window.NodesCanvas.CanvasState.load();
-    if (restored) {
-        console.log('[App] Board restored from localStorage');
+    window.NodesCanvas.Registry.syncBuiltInFolders();
+
+    // Safety check to ensure canvas is ready before loading state
+    if (window.NodesCanvas.canvas) {
+        const restored = window.NodesCanvas.CanvasState.load();
+        if (restored) {
+            console.log('[App] Board restored from localStorage');
+        }
+    } else {
+        console.error('[App] Canvas component forgot to initialize!');
     }
+
+    console.log("Nodes Canvas Studio Ready! Use F12 -> Console to see debug messages.");
 });

@@ -392,7 +392,7 @@ ${returnShape}
                     automaticLayout: true,
                     wordWrap: 'on',
                     tabSize: 2,
-                    readOnly: isBuiltIn
+                    readOnly: !isEditable
                 });
                 window._monacoEditorRef = monacoEditorInstance;
             });
@@ -447,12 +447,12 @@ ${returnShape}
         this.overlay.style.justifyContent = 'center';
 
         const config = {
-            label: sliderInstance.label,
-            min: sliderInstance.min,
-            max: sliderInstance.max,
-            step: sliderInstance.step,
+            label: sliderInstance.title, // Use title/label from instance
+            min: sliderInstance.config.min,
+            max: sliderInstance.config.max,
+            step: sliderInstance.config.step,
             value: sliderInstance.value,
-            rounding: sliderInstance.rounding || 'R', // R: Real, N: Integer, E: Even, O: Odd
+            rounding: sliderInstance.rounding || 'R',
             precision: sliderInstance.precision || 2
         };
 
@@ -556,5 +556,281 @@ ${returnShape}
 
         this.overlay.appendChild(modal);
         this.overlay.classList.add('active');
+    }
+    // --- Auth Modals ---
+    showLoginForm(onSuccess) {
+        this.overlay.innerHTML = '';
+        this.overlay.style.alignItems = 'center';
+        this.overlay.style.justifyContent = 'center';
+
+        const modal = document.createElement('div');
+        modal.className = 'node-form-modal glass-modal';
+        modal.style.width = '320px';
+
+        modal.innerHTML = `
+            <div class="node-form-header">
+                <span>Login</span>
+                <button class="close-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            </div>
+            <div class="node-form-content">
+                <div class="form-row">
+                    <label>Email</label>
+                    <input type="email" id="auth-email" placeholder="user@example.com">
+                </div>
+                <div class="form-row">
+                    <label>Password</label>
+                    <input type="password" id="auth-pass" placeholder="••••••••">
+                </div>
+                <div id="auth-error" style="color: #ff4d4d; font-size: 12px; margin-top: 8px; display: none;"></div>
+            </div>
+            <div class="form-actions" style="flex-direction: column; gap: 10px;">
+                <button class="btn-primary" id="btn-auth-submit" style="width: 100%;">Login</button>
+                <div style="font-size: 12px; opacity: 0.7; text-align: center;">
+                    Don't have an account? <a href="#" id="link-goto-signup" style="color: var(--accent-color);">Sign Up</a>
+                </div>
+            </div>
+        `;
+
+        modal.addEventListener('mousedown', e => e.stopPropagation());
+        this.overlay.appendChild(modal);
+        this.overlay.classList.add('active');
+
+        const btnSubmit = modal.querySelector('#btn-auth-submit');
+        const errorEl = modal.querySelector('#auth-error');
+
+        btnSubmit.addEventListener('click', async () => {
+            const email = modal.querySelector('#auth-email').value;
+            const pass = modal.querySelector('#auth-pass').value;
+
+            btnSubmit.disabled = true;
+            btnSubmit.textContent = 'Authenticating...';
+
+            const result = await window.NodesCanvas.AuthManager.login(email, pass);
+            if (result.success) {
+                if (onSuccess) onSuccess();
+                this.close();
+            } else {
+                errorEl.textContent = result.error;
+                errorEl.style.display = 'block';
+                btnSubmit.disabled = false;
+                btnSubmit.textContent = 'Login';
+            }
+        });
+
+        modal.querySelector('#link-goto-signup').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.showSignupForm(onSuccess);
+        });
+
+        modal.querySelector('.close-btn').addEventListener('click', () => this.close());
+    }
+
+    showSignupForm(onSuccess) {
+        this.overlay.innerHTML = '';
+        this.overlay.style.alignItems = 'center';
+        this.overlay.style.justifyContent = 'center';
+
+        const modal = document.createElement('div');
+        modal.className = 'node-form-modal glass-modal';
+        modal.style.width = '320px';
+
+        modal.innerHTML = `
+            <div class="node-form-header">
+                <span>Sign Up</span>
+                <button class="close-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            </div>
+            <div class="node-form-content">
+                <div class="form-row">
+                    <label>Full Name</label>
+                    <input type="text" id="auth-name" placeholder="John Doe">
+                </div>
+                <div class="form-row">
+                    <label>Email</label>
+                    <input type="email" id="auth-email" placeholder="user@example.com">
+                </div>
+                <div class="form-row">
+                    <label>Password</label>
+                    <input type="password" id="auth-pass" placeholder="••••••••">
+                </div>
+                <div id="auth-error" style="color: #ff4d4d; font-size: 12px; margin-top: 8px; display: none;"></div>
+            </div>
+            <div class="form-actions" style="flex-direction: column; gap: 10px;">
+                <button class="btn-primary" id="btn-auth-submit" style="width: 100%;">Create Account</button>
+                <div style="font-size: 12px; opacity: 0.7; text-align: center;">
+                    Already have an account? <a href="#" id="link-goto-login" style="color: var(--accent-color);">Login</a>
+                </div>
+            </div>
+        `;
+
+        modal.addEventListener('mousedown', e => e.stopPropagation());
+        this.overlay.appendChild(modal);
+        this.overlay.classList.add('active');
+
+        const btnSubmit = modal.querySelector('#btn-auth-submit');
+        const errorEl = modal.querySelector('#auth-error');
+
+        btnSubmit.addEventListener('click', async () => {
+            const name = modal.querySelector('#auth-name').value;
+            const email = modal.querySelector('#auth-email').value;
+            const pass = modal.querySelector('#auth-pass').value;
+
+            btnSubmit.disabled = true;
+            btnSubmit.textContent = 'Creating...';
+
+            const result = await window.NodesCanvas.AuthManager.signup(name, email, pass);
+            if (result.success) {
+                if (onSuccess) onSuccess();
+                this.close();
+            } else {
+                errorEl.textContent = result.error;
+                errorEl.style.display = 'block';
+                btnSubmit.disabled = false;
+                btnSubmit.textContent = 'Create Account';
+            }
+        });
+
+        modal.querySelector('#link-goto-login').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.showLoginForm(onSuccess);
+        });
+
+        modal.querySelector('.close-btn').addEventListener('click', () => this.close());
+    }
+
+    // --- Board Persistence Modals ---
+    showBoardsList(onSelect) {
+        this.overlay.innerHTML = '';
+        this.overlay.style.alignItems = 'center';
+        this.overlay.style.justifyContent = 'center';
+
+        const modal = document.createElement('div');
+        modal.className = 'node-form-modal glass-modal';
+        modal.style.width = '400px';
+
+        modal.innerHTML = `
+            <div class="node-form-header">
+                <span>My Saved Boards</span>
+                <button class="close-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            </div>
+            <div class="node-form-content" style="max-height: 300px; overflow-y: auto;">
+                <div id="boards-loading" style="text-align: center; padding: 20px; opacity: 0.6;">Loading boards...</div>
+                <div id="boards-list-container" class="boards-grid"></div>
+            </div>
+            <div class="form-actions">
+                <button class="btn-secondary" id="btn-boards-close">Close</button>
+            </div>
+        `;
+
+        modal.addEventListener('mousedown', e => e.stopPropagation());
+        this.overlay.appendChild(modal);
+        this.overlay.classList.add('active');
+
+        const container = modal.querySelector('#boards-list-container');
+        const loading = modal.querySelector('#boards-loading');
+
+        window.NodesCanvas.AuthManager.getBoards().then(boards => {
+            loading.style.display = 'none';
+            if (!boards || boards.length === 0) {
+                container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; opacity: 0.5; padding: 20px;">No boards found</div>';
+                return;
+            }
+
+            boards.forEach(b => {
+                const item = document.createElement('div');
+                item.className = 'board-list-item glass-panel';
+                item.innerHTML = `
+                    <div class="board-item-title">${b.title}</div>
+                    <div class="board-item-date">${new Date(b.created_at).toLocaleDateString()}</div>
+                `;
+                item.addEventListener('click', () => {
+                    if (onSelect) onSelect(b.id);
+                    this.close();
+                });
+                container.appendChild(item);
+            });
+        });
+
+        modal.querySelector('.close-btn').addEventListener('click', () => this.close());
+        modal.querySelector('#btn-boards-close').addEventListener('click', () => this.close());
+    }
+
+    showBoardSavePrompt(currentTitle, onSave) {
+        this.overlay.innerHTML = '';
+        this.overlay.style.alignItems = 'center';
+        this.overlay.style.justifyContent = 'center';
+
+        const modal = document.createElement('div');
+        modal.className = 'node-form-modal glass-modal';
+        modal.style.width = '320px';
+
+        modal.innerHTML = `
+            <div class="node-form-header">
+                <span>Save Board</span>
+                <button class="close-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            </div>
+            <div class="node-form-content">
+                <div class="form-row">
+                    <label>Board Title</label>
+                    <input type="text" id="board-title-input" value="${currentTitle || ''}" placeholder="E.g. My Awesome Project">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="btn-secondary" id="btn-save-cancel">Cancel</button>
+                <button class="btn-primary" id="btn-save-confirm">Save to Cloud</button>
+            </div>
+        `;
+
+        modal.addEventListener('mousedown', e => e.stopPropagation());
+        this.overlay.appendChild(modal);
+        this.overlay.classList.add('active');
+
+        const input = modal.querySelector('#board-title-input');
+        input.focus();
+        input.select();
+
+        modal.querySelector('#btn-save-confirm').addEventListener('click', () => {
+            const title = input.value.trim() || 'Untitled Board';
+            if (onSave) onSave(title);
+            this.close();
+        });
+
+        modal.querySelector('.close-btn').addEventListener('click', () => this.close());
+        modal.querySelector('#btn-save-cancel').addEventListener('click', () => this.close());
+    }
+
+    showConfirm(title, message, onConfirm, confirmText = "Confirm") {
+        this.overlay.innerHTML = '';
+        this.overlay.style.alignItems = 'center';
+        this.overlay.style.justifyContent = 'center';
+
+        const modal = document.createElement('div');
+        modal.className = 'node-form-modal glass-modal confirm-modal';
+        modal.style.width = '350px';
+
+        modal.innerHTML = `
+            <div class="node-form-header">
+                <span>${title}</span>
+                <button class="close-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            </div>
+            <div class="node-form-content">
+                <p style="font-size: 14px; line-height: 1.5; opacity: 0.9; margin: 0;">${message}</p>
+            </div>
+            <div class="form-actions">
+                <button class="btn-secondary" id="btn-confirm-cancel">Cancel</button>
+                <button class="btn-primary" id="btn-confirm-ok" style="background: #ff4757;">${confirmText}</button>
+            </div>
+        `;
+
+        modal.addEventListener('mousedown', e => e.stopPropagation());
+        this.overlay.appendChild(modal);
+        this.overlay.classList.add('active');
+
+        modal.querySelector('#btn-confirm-ok').addEventListener('click', () => {
+            if (onConfirm) onConfirm();
+            this.close();
+        });
+
+        modal.querySelector('.close-btn').addEventListener('click', () => this.close());
+        modal.querySelector('#btn-confirm-cancel').addEventListener('click', () => this.close());
     }
 };

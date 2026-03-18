@@ -1,114 +1,81 @@
-// CanvasState.js - Auto-saves and restores the full canvas state to/from localStorage
-// Saves: Registry folders, canvas nodes, panel nodes, connections, canvas transform
+// CanvasState.js - Logic for saving and restoring the workspace from localStorage
+// Refactored to use the unified NodeRegistry
 
 window.NodesCanvas = window.NodesCanvas || {};
 
 window.NodesCanvas.CanvasState = {
-    KEY: 'nodescanvas_board_v1',
-    _saveTimer: null,
+    _saveTimeout: null,
+    projectId: 'default_board',
 
-    /** Call this after any canvas mutation to schedule a debounced auto-save */
+    /** Schedule a debounced save */
     scheduleSave() {
-        clearTimeout(this._saveTimer);
-        this._saveTimer = setTimeout(() => this.save(), 800);
+        if (this._saveTimeout) clearTimeout(this._saveTimeout);
+        this._saveTimeout = setTimeout(() => this.save(), 500);
     },
 
-    /** Serialize and save the full board state */
-    save() {
-        try {
-            const state = {
-                savedAt: Date.now(),
-                registry: JSON.parse(JSON.stringify(window.NodesCanvas.Registry.folders)),
-                transform: window.NodesCanvas.canvas ? { ...window.NodesCanvas.canvas.transform } : null,
-                nodes: this._serializeNodes(),
-                panels: this._serializePanels(),
-                callNodes: this._serializeCallNodes(),
-                sliders: this._serializeSliders(),
-                viewers: this._serializeViewers(),
-                connections: this._serializeConnections(),
-            };
-            localStorage.setItem(this.KEY, JSON.stringify(state));
-        } catch (e) {
-            console.warn('[CanvasState] Save failed:', e);
+    /** Save current state to localStorage and optionally Cloud */
+    async save() {
+        console.log('[CanvasState] Saving workspace...');
+        const state = {
+            nodes: this._serializeNodes(),
+            connections: window.NodesCanvas.ConnectionManager ? window.NodesCanvas.ConnectionManager.getConnections() : [],
+            transform: window.NodesCanvas.canvas ? window.NodesCanvas.canvas.transform : { x: 0, y: 0, scale: 1 },
+            updatedAt: Date.now()
+        };
+
+        // Local Storage
+        localStorage.setItem(`nodes_canvas_${this.projectId}`, JSON.stringify(state));
+
+        // Cloud Storage (Auto-save if we have an active board ID)
+        if (this.currentBoardId && window.NodesCanvas.AuthManager.isLoggedIn()) {
+            this.saveRemote(this.currentBoardTitle || 'Auto-saved Board');
         }
     },
 
-    /** Load saved state and restore the board */
+    async saveRemote(title) {
+        if (!window.NodesCanvas.AuthManager.isLoggedIn()) return;
+
+        const state = {
+            nodes: this._serializeNodes(),
+            connections: window.NodesCanvas.ConnectionManager ? window.NodesCanvas.ConnectionManager.getConnections() : [],
+            transform: window.NodesCanvas.canvas ? window.NodesCanvas.canvas.transform : { x: 0, y: 0, scale: 1 }
+        };
+
+        const result = await window.NodesCanvas.AuthManager.saveBoard({
+            id: this.currentBoardId,
+            title: title || this.currentBoardTitle || 'New Board',
+            settings: state
+        });
+
+        if (result.success) {
+            this.currentBoardId = result.data.id;
+            this.currentBoardTitle = result.data.title;
+            console.log('[CanvasState] Remote save successful');
+            return true;
+        }
+        return false;
+    },
+
+    async loadRemote(boardId) {
+        const board = await window.NodesCanvas.AuthManager.getBoardDetails(boardId);
+        if (board && board.settings) {
+            this.currentBoardId = board.id;
+            this.currentBoardTitle = board.title;
+            this._restoreState(board.settings);
+            this.save(); // Sync to local storage too
+            return true;
+        }
+        return false;
+    },
+
+    /** Load state from localStorage */
     load() {
+        const raw = localStorage.getItem(`nodes_canvas_${this.projectId}`);
+        if (!raw) return false;
+
         try {
-            const raw = localStorage.getItem(this.KEY);
-            if (!raw) return false;
             const state = JSON.parse(raw);
-
-            // 1. Restore Registry
-            if (state.registry) {
-                this._applyProtection(state.registry);
-                window.NodesCanvas.Registry.folders = state.registry;
-                if (window.NodesCanvas.Registry.syncBuiltInFolders) {
-                    window.NodesCanvas.Registry.syncBuiltInFolders();
-                }
-                if (window.NodesCanvas.Registry.triggerUpdate) {
-                    window.NodesCanvas.Registry.triggerUpdate();
-                }
-            }
-
-            // 2. Restore Canvas Transform
-            if (state.transform && window.NodesCanvas.canvas) {
-                const t = state.transform;
-                window.NodesCanvas.canvas.transform = t;
-                const layer = document.getElementById('canvas-layer');
-                if (layer) layer.style.transform = `translate(${t.x}px, ${t.y}px) scale(${t.scale})`;
-            }
-
-            // 3. Restore regular Nodes
-            if (state.nodes) {
-                state.nodes.forEach(cfg => {
-                    new window.NodesCanvas.Node(cfg);
-                });
-            }
-
-            // 4. Restore Manual Data Nodes
-            if (state.panels) {
-                state.panels.forEach(cfg => {
-                    new window.NodesCanvas.ManualDataNode(cfg);
-                });
-            }
-
-            // 5. Restore Call Data Nodes
-            if (state.callNodes) {
-                state.callNodes.forEach(cfg => {
-                    new window.NodesCanvas.CallDataNode(cfg);
-                });
-            }
-
-            // 6. Restore Slider Nodes
-            if (state.sliders) {
-                state.sliders.forEach(cfg => {
-                    new window.NodesCanvas.SliderNode(cfg);
-                });
-            }
-
-            // 7. Restore Viewer Nodes
-            if (state.viewers) {
-                state.viewers.forEach(cfg => {
-                    new window.NodesCanvas.ViewerNode(cfg);
-                });
-            }
-
-            // 8. Restore Connections (after nodes are in DOM)
-            if (state.connections) {
-                requestAnimationFrame(() => {
-                    state.connections.forEach(conn => {
-                        const fromSocket = document.querySelector(`[data-portid="${conn.fromPort}"]`);
-                        const toSocket = document.querySelector(`[data-portid="${conn.toPort}"]`);
-                        if (fromSocket && toSocket && window.NodesCanvas.ConnectionManager) {
-                            window.NodesCanvas.ConnectionManager.createConnection(fromSocket, toSocket);
-                        }
-                    });
-                });
-            }
-
-            console.log(`[CanvasState] Loaded board from ${new Date(state.savedAt).toLocaleTimeString()}`);
+            this._restoreState(state);
             return true;
         } catch (e) {
             console.warn('[CanvasState] Load failed:', e);
@@ -116,123 +83,96 @@ window.NodesCanvas.CanvasState = {
         }
     },
 
-    /** Wipe localStorage board data and reload the page */
+    /** Wipe board and reset */
     clearAndReset() {
-        localStorage.removeItem(this.KEY);
+        localStorage.removeItem(`nodes_canvas_${this.projectId}`);
         location.reload();
     },
 
     // --- Serializers ---
 
     _serializeNodes() {
-        const nodes = [];
-        Object.values(window.NodesCanvas._nodeInstances || {}).forEach(inst => {
-            nodes.push({
+        if (!window.NodesCanvas.NodeRegistry) return [];
+
+        return window.NodesCanvas.NodeRegistry.getAll().map(inst => {
+            const baseData = {
                 id: inst.id,
+                type: this._getNodeType(inst),
                 x: inst.x,
                 y: inst.y,
-                title: inst.title,
-                description: inst.description || '',
-                icon: inst.icon || 'default',
-                code: inst.code || '',
-                inputs: JSON.parse(JSON.stringify(inst.inputs)),
-                outputs: JSON.parse(JSON.stringify(inst.outputs)),
-            });
-        });
-        return nodes;
-    },
+                title: inst.title
+            };
 
-    _serializePanels() {
-        const panels = [];
-        const instances = window.NodesCanvas._panelInstances || {};
-        Object.values(instances).forEach(panel => {
-            panels.push({
-                id: panel.id,
-                x: panel.x,
-                y: panel.y,
-                label: panel.label,
-                value: panel.value,
-                arrayMode: panel.arrayMode,
-                isConstant: panel.isConstant,
-            });
-        });
-        return panels;
-    },
-
-    _serializeCallNodes() {
-        const calls = [];
-        const instances = window.NodesCanvas._callInstances || {};
-        Object.values(instances).forEach(call => {
-            calls.push({
-                id: call.id,
-                x: call.x,
-                y: call.y,
-                label: call.label,
-                sourceId: call.sourceId,
-            });
-        });
-        return calls;
-    },
-
-    _serializeSliders() {
-        const sliders = [];
-        const instances = window.NodesCanvas._nodeInstances || {};
-        Object.values(instances).forEach(node => {
-            if (node instanceof window.NodesCanvas.SliderNode) {
-                sliders.push({
-                    id: node.id,
-                    x: node.x,
-                    y: node.y,
-                    label: node.label,
-                    min: node.min,
-                    max: node.max,
-                    step: node.step,
-                    value: node.value,
-                    rounding: node.rounding,
-                    precision: node.precision,
-                });
+            // Specialized data based on type
+            if (inst instanceof window.NodesCanvas.ManualDataNode) {
+                return { ...baseData, label: inst.label, value: inst.value, arrayMode: inst.arrayMode, isConstant: inst.isConstant };
+            } else if (inst instanceof window.NodesCanvas.CallDataNode) {
+                return { ...baseData, label: inst.label, sourceId: inst.sourceId };
+            } else if (inst instanceof window.NodesCanvas.SliderNode) {
+                return { ...baseData, settings: inst.config, value: inst.value };
+            } else if (inst instanceof window.NodesCanvas.ViewerNode) {
+                return { ...baseData };
+            } else {
+                // Generic Function Node
+                return {
+                    ...baseData,
+                    description: inst.description || '',
+                    icon: inst.icon || 'box',
+                    code: inst.code || '',
+                    inputs: window.NodesCanvas.Utils.clone(inst.inputs || []),
+                    outputs: window.NodesCanvas.Utils.clone(inst.outputs || [])
+                };
             }
         });
-        return sliders;
     },
 
-    _serializeConnections() {
-        const conns = [];
-        document.querySelectorAll('.connection-path:not(.temp-path)').forEach(path => {
-            const from = path.dataset.fromPort;
-            const to = path.dataset.toPort;
-            if (from && to) conns.push({ fromPort: from, toPort: to });
-        });
-        return conns;
+    _getNodeType(inst) {
+        if (inst instanceof window.NodesCanvas.ManualDataNode) return 'manual-data';
+        if (inst instanceof window.NodesCanvas.CallDataNode) return 'call-data';
+        if (inst instanceof window.NodesCanvas.SliderNode) return 'slider';
+        if (inst instanceof window.NodesCanvas.ViewerNode) return 'viewer';
+        return 'function';
     },
 
-    _serializeViewers() {
-        const viewers = [];
-        const instances = window.NodesCanvas._viewerInstances || {};
-        Object.values(instances).forEach(viewer => {
-            viewers.push({
-                id: viewer.id,
-                x: viewer.x,
-                y: viewer.y,
-                label: viewer.label
+    // --- Restoration ---
+
+    _restoreState(state) {
+        if (!state) return;
+
+        // 1. Clear current registry
+        if (window.NodesCanvas.NodeRegistry) window.NodesCanvas.NodeRegistry.clear();
+
+        // 2. Clear current DOM nodes (but preserve the connections-layer SVG)
+        const layer = document.getElementById('canvas-layer');
+        if (layer) {
+            // Remove all children EXCEPT the connections-layer SVG
+            Array.from(layer.children).forEach(child => {
+                if (child.id !== 'connections-layer') {
+                    child.remove();
+                }
             });
-        });
-        return viewers;
-    },
+            // Also clear the SVG content
+            const svg = document.getElementById('connections-layer');
+            if (svg) svg.innerHTML = '';
+        }
 
-    /** Recursively re-apply editable: false to built-in IDs */
-    _applyProtection(folders) {
-        const protectedFolders = ['f_data', 'f_math', 'f_logic'];
-        const protectedNodes = ['n_manual_data', 'n_call_data', 'n_add', 'n_mult', 'n_and'];
+        // 3. Restore Transform
+        if (state.transform && window.NodesCanvas.canvas) {
+            window.NodesCanvas.canvas.setTransform(state.transform.x, state.transform.y, state.transform.scale);
+        }
 
-        folders.forEach(f => {
-            if (protectedFolders.includes(f.id)) f.editable = false;
-            if (f.nodes) {
-                f.nodes.forEach(n => {
-                    if (protectedNodes.includes(n.id)) n.editable = false;
-                });
-            }
-            if (f.subfolders) this._applyProtection(f.subfolders);
-        });
-    },
+        // 4. Create Nodes
+        if (state.nodes && Array.isArray(state.nodes)) {
+            state.nodes.forEach(config => {
+                window.NodesCanvas.NodeFactory.createNode(config);
+            });
+        }
+
+        // 5. Restore Connections
+        if (state.connections && window.NodesCanvas.ConnectionManager) {
+            window.NodesCanvas.ConnectionManager.restoreConnections(state.connections);
+        }
+
+        console.log(`[CanvasState] Restored ${state.nodes?.length || 0} nodes`);
+    }
 };

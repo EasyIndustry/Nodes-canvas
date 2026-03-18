@@ -1,4 +1,5 @@
 // CodeInspector.js - Right-side panel that shows the generated JS from the current graph
+// Refactored to match current BaseNode/Node classes
 
 window.NodesCanvas = window.NodesCanvas || {};
 
@@ -41,8 +42,8 @@ window.NodesCanvas.CodeInspector = {
         const engine = window.NodesCanvas.GraphEngine;
         if (!engine) return '// GraphEngine not available';
 
-        const { nodes, conns } = engine._buildGraph();
-        const order = engine._topoSort(nodes, conns);
+        const { nodes, connections } = engine._buildGraph();
+        const order = engine._executionOrder; // Already sorted in _buildGraph
 
         const lines = [];
         lines.push(`// ============================================================`);
@@ -51,128 +52,129 @@ window.NodesCanvas.CodeInspector = {
         lines.push(`// ============================================================`);
         lines.push('');
 
-        // 1. Data Sources (Manual Data & Sliders)
-        const dataNodes = Object.values(nodes).filter(n => n.type === 'manual-data' || n.type === 'slider');
+        // 1. Identification and Variable Naming
         const dataVars = {}; // nodeId -> uniqueVariableName
-        const usedDataNames = new Set();
+        const nodeOutputVars = {}; // nodeId -> resultVarName
+        const portToVar = {}; // socketId -> fullVariableExpression (e.g., out_myAdd.Result)
 
+        const usedNames = new Set();
+        const getUniqueName = (base) => {
+            let name = engine._toVar(base);
+            if (usedNames.has(name)) {
+                let c = 1;
+                while (usedNames.has(`${name}_${c}`)) c++;
+                name = `${name}_${c}`;
+            }
+            usedNames.add(name);
+            return name;
+        };
+
+        // 2. Data Sources (Manual Data & Sliders)
+        const dataNodes = Object.values(nodes).filter(n => n instanceof window.NodesCanvas.ManualDataNode || n instanceof window.NodesCanvas.SliderNode);
         if (dataNodes.length) {
             lines.push('// --- Data Sources ---');
             dataNodes.forEach(n => {
-                let baseName = engine._toVar(n.label || (n.type === 'slider' ? 'slider' : 'data'));
-                // Ensure uniqueness
-                if (usedDataNames.has(baseName)) {
-                    let counter = 1;
-                    while (usedDataNames.has(`${baseName}_${counter}`)) counter++;
-                    baseName = `${baseName}_${counter}`;
-                }
-                usedDataNames.add(baseName);
-                dataVars[n.id] = baseName;
+                const varName = getUniqueName(n.title || (n instanceof window.NodesCanvas.SliderNode ? 'slider' : 'data'));
+                dataVars[n.id] = varName;
 
-                if (n.type === 'slider') {
-                    lines.push(`const ${baseName} = ${n.value}; // Slider`);
+                if (n instanceof window.NodesCanvas.SliderNode) {
+                    lines.push(`const ${varName} = ${n.value}; // Slider`);
                 } else {
                     const keyword = n.isConstant ? 'const' : 'let';
-                    lines.push(`${keyword} ${baseName} = ${JSON.stringify(n.value)};`);
+                    lines.push(`${keyword} ${varName} = ${JSON.stringify(n.value)}; // Panel`);
                 }
+                // Map output port: ManualData and Slider use {id}_out
+                portToVar[`${n.id}_out`] = varName;
             });
             lines.push('');
         }
 
-        // 2. Function Deduplication logic
-        // We only care about nodes that HAVE code (logic nodes)
-        const logicNodes = Object.values(nodes).filter(n => n.type === 'function' && n.code);
-        const uniqueFns = new Map(); // codeStr -> uniqueFnName
+        // 3. Logic Functions Deduplication
+        const logicNodes = Object.values(nodes).filter(n => (n instanceof window.NodesCanvas.Node || n instanceof window.NodesCanvas.ExpressionNode) && n.code);
+        const uniqueLogicFns = new Map(); // code -> fnName
 
         if (logicNodes.length) {
-            lines.push('// --- Node Functions ---');
-            logicNodes.forEach(node => {
-                const codeKey = node.code.trim();
-                if (!uniqueFns.has(codeKey)) {
-                    const fnName = `node_${engine._toVar(node.label || 'function')}`;
-                    uniqueFns.set(codeKey, fnName);
-                    lines.push(`// Node Type: ${node.label}`);
-                    lines.push(node.code.replace(/\bfunction execute\b/, `function ${fnName}`));
+            lines.push('// --- Logic Functions ---');
+            logicNodes.forEach(n => {
+                if (n instanceof window.NodesCanvas.ExpressionNode) return; // Special inline handling
+
+                const codeKey = n.code.trim();
+                if (!uniqueLogicFns.has(codeKey)) {
+                    const fnName = getUniqueName(n.title || 'function');
+                    uniqueLogicFns.set(codeKey, fnName);
+                    lines.push(`function ${fnName}({ ${n.inputs.map(i => i.id).join(', ')} }) {`);
+                    lines.push(n.code.replace(/^return\s+/, '  return ')); // Simple indent
+                    lines.push(`}`);
                     lines.push('');
                 }
             });
         }
 
-        // 3. Execution chain
-        lines.push('// --- Execution ---');
-        const portToVar = {}; // portId -> variableExpression
-        const usedNodeVarNames = new Set();
-
-        // Initial mapping of data sources to their variables
-        dataNodes.forEach(n => {
-            portToVar[n.outPortId] = dataVars[n.id];
-        });
-
+        // 4. Execution Chain
+        lines.push('// --- Process ---');
         order.forEach(nodeId => {
             const node = nodes[nodeId];
+            if (dataNodes.includes(node)) return; // Already handled
 
-            // Skip data nodes (already handled)
-            if (node.type === 'manual-data' || node.type === 'slider') return;
+            // Viewer node: just a comment of the input
+            if (node instanceof window.NodesCanvas.ViewerNode) {
+                const incoming = connections.find(c => c.toNodeId === nodeId);
+                const val = incoming ? (portToVar[incoming.fromPortId] || 'undefined') : 'undefined';
+                lines.push(`// Viewer [${node.id}]: Displaying ${val}`);
+                return;
+            }
 
-            // Handle Call Data (Passthrough)
-            if (node.type === 'call-data') {
+            // Call Data (Linked from a data source)
+            if (node instanceof window.NodesCanvas.CallDataNode) {
                 const sourceVar = dataVars[node.sourceId] || 'undefined';
-                let nodeBase = engine._toVar(node.label);
-                if (usedNodeVarNames.has(nodeBase)) {
-                    let c = 1;
-                    while (usedNodeVarNames.has(`${nodeBase}_${c}`)) c++;
-                    nodeBase = `${nodeBase}_${c}`;
+                const resultVar = getUniqueName(`out_${node.label || 'linked'}`);
+                lines.push(`const ${resultVar} = ${sourceVar}; // Call Data from ${node.label}`);
+                // Call data nodes effectively pass through to all their outputs (usually 1)
+                if (node.outputs) {
+                    node.outputs.forEach(p => portToVar[p.id] = resultVar);
                 }
-                usedNodeVarNames.add(nodeBase);
-                const resultVar = `out_${nodeBase}`;
-                lines.push(`const ${resultVar} = ${sourceVar}; // Linked from ${node.label}`);
-
-                node.outputPorts.forEach((p) => {
-                    portToVar[p] = resultVar;
-                });
                 return;
             }
 
             // Logic nodes
             if (!node.code) return;
 
-            const fnName = uniqueFns.get(node.code.trim());
-            const args = {};
-            conns.forEach(conn => {
-                if (conn.targetNodeId !== nodeId) return;
-                const idx = node.inputPorts.indexOf(conn.targetPortId);
-                const label = engine._toVar(idx >= 0 ? (node.inputLabels?.[idx] || conn.targetPortId) : conn.targetPortId);
-                args[label] = portToVar[conn.sourcePortId] ?? 'undefined';
-            });
+            const resVar = getUniqueName(`out_${node.title || 'node'}`);
+            nodeOutputVars[nodeId] = resVar;
 
-            // Instance-specific output variable
-            let nodeBase = engine._toVar(node.label);
-            if (usedNodeVarNames.has(nodeBase)) {
-                let c = 1;
-                while (usedNodeVarNames.has(`${nodeBase}_${c}`)) c++;
-                nodeBase = `${nodeBase}_${c}`;
+            // Gather inputs
+            const inputArgs = {};
+            node.inputs.forEach(inp => {
+                const conn = connections.find(c => c.toNodeId === nodeId && c.toPortId === inp.id);
+                inputArgs[inp.id] = conn ? (portToVar[conn.fromPortId] || 'undefined') : 'undefined';
+            });
+            const argStr = Object.entries(inputArgs).map(([k, v]) => `${k}: ${v}`).join(', ');
+
+            if (node instanceof window.NodesCanvas.ExpressionNode) {
+                // Inline expression
+                lines.push(`const ${resVar} = { Result: (${node.code}) }; // Expression`);
+            } else {
+                // Call deduplicated function
+                const fnName = uniqueLogicFns.get(node.code.trim());
+                lines.push(`const ${resVar} = ${fnName}({ ${argStr} });`);
             }
-            usedNodeVarNames.add(nodeBase);
-            const resultVar = `out_${nodeBase}`;
 
-            const argStr = Object.entries(args).map(([k, v]) => `${k}: ${v}`).join(', ');
-            lines.push(`const ${resultVar} = ${fnName}({ ${argStr} });`);
-
-            // Map each output port to resultVar.label
-            node.outputPorts.forEach((p, i) => {
-                const outLabel = engine._toVar(node.outputLabels?.[i] || 'Result');
-                portToVar[p] = `${resultVar}.${outLabel}`;
-            });
+            // Map outputs
+            if (node.outputs) {
+                node.outputs.forEach(outPort => {
+                    portToVar[outPort.id] = `${resVar}.${engine._toVar(outPort.id)}`;
+                });
+            }
         });
 
         lines.push('');
-        lines.push('// --- Final ---');
-        // Filter out variables that are just properties of other variables (like out_Add.Result)
-        // Only show the top-level "out_" variables that represent node results
+        lines.push('// --- Final Output ---');
+        // Filter out variables that are just properties (like out_Add.Result)
+        // Show the top-level results for each branch
         const finalResults = [...new Set(Object.values(portToVar).map(v => v.split('.')[0]))];
         finalResults.forEach(rv => {
             if (rv.startsWith('out_')) {
-                lines.push(`// Result of instance: ${rv}`);
+                lines.push(`console.log("Result node:", ${rv});`);
             }
         });
 
@@ -182,20 +184,15 @@ window.NodesCanvas.CodeInspector = {
     _render(code) {
         if (!this._codeEl) return;
 
-        // Simple JS syntax highlighting via regex
         const escaped = code
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
 
         const highlighted = escaped
-            // Comments
             .replace(/(\/\/[^\n]*)/g, '<span class="ci-comment">$1</span>')
-            // Strings
             .replace(/(&quot;[^&]*&quot;|'[^']*'|`[^`]*`)/g, '<span class="ci-string">$1</span>')
-            // Keywords
             .replace(/\b(const|let|var|function|return|if|else|for|while|new|this)\b/g, '<span class="ci-keyword">$1</span>')
-            // Numbers
             .replace(/\b(\d+\.?\d*)\b/g, '<span class="ci-number">$1</span>');
 
         this._codeEl.innerHTML = highlighted;

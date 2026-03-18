@@ -6,8 +6,8 @@ window.NodesCanvas.Sidebar = class {
     constructor() {
         this.element = document.getElementById("left-sidebar");
         this.btnToggle = document.getElementById("btn-toggle-sidebar");
-        this.btnAddFolder = document.getElementById("btn-add-folder");
         this.treeContainer = document.getElementById("treeview-container");
+        this.searchInput = document.getElementById("sidebar-search");
 
         this.initEvents();
         this.renderTree(window.NodesCanvas.Registry.folders);
@@ -16,6 +16,63 @@ window.NodesCanvas.Sidebar = class {
         window.NodesCanvas.Registry.onChange((folders) => {
             this.renderTree(folders);
         });
+
+        // Listen to Auth changes for the title
+        if (window.NodesCanvas.AuthManager) {
+            window.NodesCanvas.AuthManager.onChange((user) => {
+                this.setUserName(user ? user.name : null);
+                this.renderProfileSection(user);
+            });
+            this.renderProfileSection(window.NodesCanvas.AuthManager.getUser());
+        }
+    }
+
+    renderProfileSection(user) {
+        // Remove existing if any
+        const existing = this.element.querySelector('.sidebar-settings-container');
+        if (existing) existing.remove();
+
+        if (!user) return;
+
+        // Settings / Profile Section at bottom
+        const settingsContainer = document.createElement('div');
+        settingsContainer.className = 'sidebar-settings-container';
+
+        const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+
+        settingsContainer.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="user-avatar-initials">${initials}</div>
+                <div class="user-details">
+                    <span class="user-name">${user.name}</span>
+                    <span class="user-email">${user.email}</span>
+                </div>
+            </div>
+            <button class="sidebar-settings-btn" title="Settings">
+                <i data-lucide="settings" style="width:16px; height:16px;"></i>
+            </button>
+        `;
+
+        settingsContainer.querySelector('.sidebar-settings-btn').addEventListener('click', () => {
+            // Open global settings dropdown
+            const btn = document.getElementById('btn-settings');
+            if (btn) btn.click();
+        });
+
+        this.element.appendChild(settingsContainer);
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    setUserName(name) {
+        const titleEl = document.getElementById("sidebar-library-title");
+        if (titleEl) {
+            if (name) {
+                const firstName = name.split(' ')[0];
+                titleEl.textContent = `${firstName}'s Library`;
+            } else {
+                titleEl.textContent = "Library";
+            }
+        }
     }
 
     initEvents() {
@@ -23,21 +80,167 @@ window.NodesCanvas.Sidebar = class {
             this.element.classList.toggle("closed");
         });
 
-        this.btnAddFolder.addEventListener("click", () => {
-            const id = window.NodesCanvas.Registry.addFolder("New Folder");
-            // Wait for re-render, then trigger edit mode
-            setTimeout(() => {
-                const newFolderEl = document.querySelector(`.tree-folder[data-id="${id}"] .edit-folder-btn`);
-                if (newFolderEl) newFolderEl.click();
-            }, 50);
-        });
+        if (this.searchInput) {
+            this.searchInput.addEventListener("input", (e) => {
+                this.filterTree(e.target.value.toLowerCase());
+            });
+        }
+    }
+
+    setUserName(name) {
+        const titleEl = document.getElementById("sidebar-library-title");
+        if (titleEl) {
+            if (name) {
+                const firstName = name.split(' ')[0];
+                titleEl.textContent = `${firstName}'s Library`;
+            } else {
+                titleEl.textContent = "Library";
+            }
+        }
     }
 
     renderTree(folders) {
         this.treeContainer.innerHTML = '';
-        this.renderFolderLevel(folders, this.treeContainer);
+
+        // 1. Separate Built-in (Functions) from User folders
+        const builtInFolders = folders.filter(f => f.editable === false);
+        const userFolders = folders.filter(f => f.editable !== false);
+
+        // 2. Create Sections
+        this.renderSection("Default Functions", builtInFolders);
+        this.renderSection("User Funct", userFolders, true); // hasAdd = true
+        this.renderSection("Classes", [], true); // hasAdd = true
+
         // Create icons only ONCE after the whole tree is in the DOM
         if (window.lucide) window.lucide.createIcons();
+
+        // If there's a search active, re-apply it
+        if (this.searchInput && this.searchInput.value) {
+            this.filterTree(this.searchInput.value.toLowerCase());
+        }
+    }
+
+    renderSection(title, folders, hasAdd = false) {
+        const section = document.createElement('div');
+        section.className = 'sidebar-section';
+        // By default, open if it has content
+        if (folders.length === 0 && title !== "Default Functions") {
+            section.classList.add('closed');
+        }
+
+        const header = document.createElement('div');
+        header.className = 'sidebar-section-header';
+
+        header.innerHTML = `
+            <span>${title}</span>
+            <div>
+                ${hasAdd ? `
+                    <span class="add-folder-section-btn" title="Add Folder">
+                        <i data-lucide="plus-square" style="width:14px; height:14px;"></i>
+                    </span>
+                ` : ''}
+                <span class="sidebar-section-chevron">
+                    <i data-lucide="chevron-right" style="width:12px; height:12px;"></i>
+                </span>
+            </div>
+        `;
+
+        header.addEventListener('click', (e) => {
+            if (e.target.closest('.add-folder-section-btn')) {
+                e.stopPropagation();
+                this.handleSectionAddFolder(title);
+                return;
+            }
+            section.classList.toggle('closed');
+        });
+
+        const content = document.createElement('div');
+        content.className = 'sidebar-section-content';
+
+        if (folders.length > 0) {
+            this.renderFolderLevel(folders, content);
+        } else {
+            const empty = document.createElement('div');
+            empty.className = 'empty-section-placeholder';
+            empty.style.padding = '8px 12px';
+            empty.style.fontSize = '11px';
+            empty.style.opacity = '0.4';
+            empty.style.fontStyle = 'italic';
+            empty.textContent = `No ${title.toLowerCase()} yet`;
+            content.appendChild(empty);
+        }
+
+        section.appendChild(header);
+        section.appendChild(content);
+        this.treeContainer.appendChild(section);
+    }
+
+    handleSectionAddFolder(sectionTitle) {
+        // Logic to add folder to the correct section
+        const id = window.NodesCanvas.Registry.addFolder("New Folder");
+
+        // Open the section if it was closed
+        const sections = Array.from(this.treeContainer.querySelectorAll('.sidebar-section'));
+        const targetSection = sections.find(s => s.querySelector('.sidebar-section-header span').textContent.includes(sectionTitle));
+        if (targetSection) targetSection.classList.remove('closed');
+
+        // Wait for re-render (which happens due to Registry event)
+        // then trigger edit mode on the new folder
+        setTimeout(() => {
+            const newFolderEl = document.querySelector(`.tree-folder[data-id="${id}"] .edit-folder-btn`);
+            if (newFolderEl) newFolderEl.click();
+        }, 50);
+    }
+
+    filterTree(term) {
+        const sections = this.treeContainer.querySelectorAll('.sidebar-section');
+
+        if (!term) {
+            // Reset visibility
+            this.treeContainer.querySelectorAll('.tree-folder, .tree-node-item, .sidebar-section, .empty-section-placeholder').forEach(el => {
+                el.style.display = '';
+            });
+            return;
+        }
+
+        sections.forEach(section => {
+            let sectionVisible = false;
+            const nodes = section.querySelectorAll('.tree-node-item');
+            const folders = section.querySelectorAll('.tree-folder');
+            const placeholder = section.querySelector('.empty-section-placeholder');
+
+            if (placeholder) placeholder.style.display = 'none';
+
+            nodes.forEach(node => {
+                const text = node.textContent.toLowerCase();
+                const isMatch = text.includes(term);
+                node.style.display = isMatch ? 'flex' : 'none';
+                if (isMatch) {
+                    sectionVisible = true;
+                    // Ensure parents are open
+                    let parent = node.closest('.tree-folder');
+                    while (parent) {
+                        parent.style.display = 'block';
+                        parent.classList.add('open');
+                        parent = parent.parentElement.closest('.tree-folder');
+                    }
+                }
+            });
+
+            folders.forEach(folder => {
+                const folderName = folder.querySelector('.folder-name-label').textContent.toLowerCase();
+                if (folderName.includes(term)) {
+                    folder.style.display = 'block';
+                    sectionVisible = true;
+                } else {
+                    const hasVisibleChild = Array.from(folder.querySelectorAll('.tree-node-item')).some(n => n.style.display !== 'none');
+                    folder.style.display = hasVisibleChild ? 'block' : 'none';
+                }
+            });
+
+            section.style.display = sectionVisible ? 'block' : 'none';
+            if (sectionVisible) section.classList.remove('closed');
+        });
     }
 
 
@@ -74,6 +277,18 @@ window.NodesCanvas.Sidebar = class {
             headerEl.addEventListener('click', (e) => {
                 if (e.target.closest('button') || e.target.tagName.toLowerCase() === 'input') return;
                 folderEl.classList.toggle('open');
+            });
+
+            // Right-click for Context Menu (Only if editable)
+            headerEl.addEventListener('contextmenu', (e) => {
+                if (folder.editable !== false && window.NodesCanvas.sidebarContextMenu) {
+                    window.NodesCanvas.sidebarContextMenu.show(e, {
+                        type: 'folder',
+                        id: folder.id,
+                        data: folder,
+                        isEditable: true
+                    });
+                }
             });
 
             // Edit Folder Name
@@ -155,6 +370,18 @@ window.NodesCanvas.Sidebar = class {
                             return;
                         }
                         this.addNodeToCanvas(nodeTemplate);
+                    });
+
+                    // Right-click for Context Menu (Only if editable)
+                    nodeItemEls.addEventListener('contextmenu', (e) => {
+                        if (nodeTemplate.editable !== false && window.NodesCanvas.sidebarContextMenu) {
+                            window.NodesCanvas.sidebarContextMenu.show(e, {
+                                type: 'node',
+                                id: nodeTemplate.id,
+                                data: nodeTemplate,
+                                isEditable: true
+                            });
+                        }
                     });
 
                     contentEl.appendChild(nodeItemEls);
