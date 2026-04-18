@@ -23,6 +23,64 @@ window.NodesCanvas.Settings = class {
                 return res;
             };
         }
+
+        // Standalone mode: hide cloud/auth UI, inject save button
+        if (localStorage.getItem('nc_standalone_mode') === 'true') {
+            this._initStandaloneUI();
+        }
+    }
+
+    _initStandaloneUI() {
+        // Hide cloud-specific elements
+        const hide = ['btn-login', 'btn-logout', 'board-info-section', 'board-persistence-actions'];
+        hide.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+
+        // Inject standalone save button after btn-login (first item in dropdown)
+        const dropdown = document.getElementById('settings-dropdown');
+        if (!dropdown) return;
+
+        // First divider after btn-login
+        const firstDivider = dropdown.querySelector('.settings-divider');
+        const saveBtn = document.createElement('div');
+        saveBtn.className = 'settings-item';
+        saveBtn.id = 'btn-save-standalone';
+        saveBtn.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                <polyline points="17 21 17 13 7 13 7 21"/>
+                <polyline points="7 3 7 8 15 8"/>
+            </svg>
+            <span>Save Board</span>
+            <span id="btn-save-status" style="margin-left:auto;font-size:10px;color:#00dc82;opacity:0;transition:opacity 0.3s">✓ Saved</span>`;
+
+        // Insert before the board-info-section
+        const boardInfoDiv = document.getElementById('board-info-section');
+        if (boardInfoDiv && boardInfoDiv.parentNode === dropdown) {
+            dropdown.insertBefore(saveBtn, boardInfoDiv);
+        } else {
+            dropdown.appendChild(saveBtn);
+        }
+
+        saveBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            await this._standaloneFileSave();
+        });
+    }
+
+    async _standaloneFileSave() {
+        const dropSaveStatus = document.getElementById('btn-save-status');
+
+        await window.NodesCanvas.CanvasState.save();
+
+        if (dropSaveStatus) {
+            dropSaveStatus.style.opacity = '1';
+            setTimeout(() => { dropSaveStatus.style.opacity = '0'; }, 2000);
+        }
+        // Reset dirty flag
+        if (window.NodesCanvas._markClean) window.NodesCanvas._markClean();
     }
 
     initEvents() {

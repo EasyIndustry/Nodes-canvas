@@ -6,18 +6,38 @@ window.NodesCanvas = window.NodesCanvas || {};
 window.NodesCanvas.CanvasState = {
     _saveTimeout: null,
     _lastRemoteSave: 0,
-    _remoteSaveMinInterval: 15000, // 15s — Xano free tier: 10 req / 20s
+    _remoteSaveMinInterval: 15000,
     projectId: 'default_board',
 
-    /** Schedule a debounced save (local only, fast) */
-    scheduleSave() {
-        if (this._saveTimeout) clearTimeout(this._saveTimeout);
-        this._saveTimeout = setTimeout(() => this.save(), 800);
+    get isStandaloneMode() {
+        return localStorage.getItem('nc_standalone_mode') === 'true';
     },
 
-    /** Save current state to localStorage and optionally Cloud */
+    get activeBoardName() {
+        return localStorage.getItem('nc_active_board_name') || 'default';
+    },
+
+    /** Schedule a debounced save (cache only, fast) */
+    scheduleSave() {
+        if (window.NodesCanvas._markDirty) window.NodesCanvas._markDirty();
+        if (this._saveTimeout) clearTimeout(this._saveTimeout);
+        this._saveTimeout = setTimeout(() => this.saveToCache(), 800);
+    },
+
+    /** Saves purely to localStorage memory cache, avoiding disk writes */
+    saveToCache() {
+        if (this.isRestoring) return;
+        const state = {
+            nodes: this._serializeNodes(),
+            connections: window.NodesCanvas.ConnectionManager ? window.NodesCanvas.ConnectionManager.getConnections() : [],
+            transform: window.NodesCanvas.canvas ? window.NodesCanvas.canvas.transform : { x: 0, y: 0, scale: 1 },
+            updatedAt: Date.now()
+        };
+        localStorage.setItem(`nodes_canvas_${this.projectId}`, JSON.stringify(state));
+    },
+
+    /** Save current state to localStorage and optionally workspace file / Cloud */
     async save() {
-        console.log('[CanvasState] Saving workspace...');
         const state = {
             nodes: this._serializeNodes(),
             connections: window.NodesCanvas.ConnectionManager ? window.NodesCanvas.ConnectionManager.getConnections() : [],
@@ -25,17 +45,39 @@ window.NodesCanvas.CanvasState = {
             updatedAt: Date.now()
         };
 
-        // Local Storage
+        // Always save to localStorage (fast, immediate)
         localStorage.setItem(`nodes_canvas_${this.projectId}`, JSON.stringify(state));
 
-        // Cloud Storage — throttled to respect Xano free tier rate limits
-        if (this.currentBoardId && window.NodesCanvas.AuthManager.isLoggedIn()) {
+        // Standalone mode: also write to workspace file
+        if (this.isStandaloneMode) {
+            const wm = window.NodesCanvas.workspaceManager;
+            if (wm && wm.isReady) {
+                try {
+                    await wm.saveBoard(this.activeBoardName, state);
+                    if (window.NodesCanvas.Registry) {
+                        await window.NodesCanvas.Registry.saveLocal();
+                    }
+                    if (window.NodesCanvas._markClean) window.NodesCanvas._markClean();
+                } catch (e) {
+                    console.error('[CanvasState] Save to workspace failed:', e);
+                }
+            } else {
+                // No file handle — still mark clean (localStorage saved)
+                if (window.NodesCanvas._markClean) window.NodesCanvas._markClean();
+            }
+            return;
+        }
+
+        // Mark clean for localStorage-only saves in cloud mode
+        if (window.NodesCanvas._markClean) window.NodesCanvas._markClean();
+
+        // Cloud Storage (Xano) — only in cloud mode
+        if (this.currentBoardId && window.NodesCanvas.AuthManager && window.NodesCanvas.AuthManager.isLoggedIn()) {
             const now = Date.now();
             if (now - this._lastRemoteSave >= this._remoteSaveMinInterval) {
                 this._lastRemoteSave = now;
                 this.saveRemote(this.currentBoardTitle || 'Auto-saved Board');
             } else {
-                // Schedule a deferred remote save for when the window opens
                 if (!this._remoteDeferred) {
                     const remaining = this._remoteSaveMinInterval - (now - this._lastRemoteSave);
                     this._remoteDeferred = setTimeout(() => {
@@ -84,11 +126,30 @@ window.NodesCanvas.CanvasState = {
         return false;
     },
 
-    /** Load state from localStorage */
+    /** Load state from localStorage (or standalone board data) */
     load() {
+        // Standalone mode: board data was injected by the dashboard
+        if (this.isStandaloneMode) {
+            const raw = localStorage.getItem('nc_board_data');
+            if (raw) {
+                try {
+                    const state = JSON.parse(raw);
+                    // Clear injected data so refresh doesn't double-load
+                    localStorage.removeItem('nc_board_data');
+                    // Also seed localStorage slot so subsequent saves work
+                    localStorage.setItem(`nodes_canvas_${this.projectId}`, raw);
+                    this._restoreState(state);
+                    console.log('[CanvasState] Standalone board loaded:', this.activeBoardName);
+                    return true;
+                } catch (e) {
+                    console.warn('[CanvasState] Standalone board parse failed:', e);
+                }
+            }
+            // Fallback to localStorage slot
+        }
+
         const raw = localStorage.getItem(`nodes_canvas_${this.projectId}`);
         if (!raw) return false;
-
         try {
             const state = JSON.parse(raw);
             this._restoreState(state);
@@ -134,6 +195,8 @@ window.NodesCanvas.CanvasState = {
                 return { ...baseData, settings: { isAuto: inst.isAuto } };
             } else if (inst instanceof window.NodesCanvas.ValueListNode) {
                 return { ...baseData, manualOptions: inst.manualOptions, selectedIndex: inst.selectedIndex };
+            } else if (inst instanceof window.NodesCanvas.BranchNode) {
+                return { ...baseData, branches: window.NodesCanvas.Utils.clone(inst.branches) };
             } else {
                 // Generic Function Node
                 return {
@@ -154,6 +217,8 @@ window.NodesCanvas.CanvasState = {
         if (inst instanceof window.NodesCanvas.SliderNode) return 'slider';
         if (inst instanceof window.NodesCanvas.ViewerNode) return 'viewer';
         if (inst instanceof window.NodesCanvas.DataHolderNode) return 'data-holder';
+        if (inst instanceof window.NodesCanvas.ExpressionNode) return 'expression';
+        if (inst instanceof window.NodesCanvas.BranchNode) return 'branch';
         if (inst instanceof window.NodesCanvas.HttpRequestNode) return 'http-request';
         if (inst instanceof window.NodesCanvas.ValueListNode) return 'value-list';
         return 'function';

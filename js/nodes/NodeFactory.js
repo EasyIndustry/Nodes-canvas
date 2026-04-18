@@ -49,6 +49,8 @@ window.NodesCanvas.NodeFactory = {
             instance = new window.NodesCanvas.HttpRequestNode(finalConfig);
         } else if (isType('value-list') || config.id === 'n_value_list') {
             instance = new window.NodesCanvas.ValueListNode(finalConfig);
+        } else if (isType('branch') || config.id === 'n_branch') {
+            instance = new window.NodesCanvas.BranchNode(finalConfig);
         } else {
             // Generic Functional Node
             instance = new window.NodesCanvas.Node(finalConfig);
@@ -84,6 +86,7 @@ window.NodesCanvas.NodeFactory = {
             else if (original instanceof window.NodesCanvas.ExpressionNode) type = 'expression';
             else if (original instanceof window.NodesCanvas.HttpRequestNode) type = 'http-request';
             else if (original instanceof window.NodesCanvas.ValueListNode) type = 'value-list';
+            else if (original instanceof window.NodesCanvas.BranchNode) type = 'branch';
 
             // Deep clone the config
             const config = {
@@ -99,7 +102,8 @@ window.NodesCanvas.NodeFactory = {
                 settings: original.config ? window.NodesCanvas.Utils.clone(original.config) : undefined,
                 value: original.value,
                 arrayMode: original.arrayMode,
-                isConstant: original.isConstant
+                isConstant: original.isConstant,
+                branches: original.branches ? window.NodesCanvas.Utils.clone(original.branches) : undefined
             };
 
             const copy = this.createNode(config);

@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nodes Canvas Studio</title>
+    <link rel="stylesheet" href="./css/standalone.css">
+</head>
+<body>
+
+<div class="dashboard">
+
+    <!-- Header -->
+    <header class="dash-header">
+        <div class="logo">
+            <div class="logo-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/>
+                    <circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/>
+                    <line x1="9" y1="6" x2="15" y2="6"/><line x1="6" y1="9" x2="6" y2="15"/>
+                    <line x1="9" y1="18" x2="15" y2="18"/>
+                </svg>
+            </div>
+            <div class="logo-text">
+                <h1>Nodes Canvas Studio</h1>
+                <span>Standalone · v1.5</span>
+            </div>
+        </div>
+        <div class="dash-header-actions">
+            <button class="btn btn-ghost btn-sm" onclick="window.location.href='index.html'">
+                ← Back to Mode Select
+            </button>
+            <button class="btn btn-ghost btn-sm" id="btn-change-workspace" style="display:none">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                Change Workspace
+            </button>
+            <button class="btn btn-secondary btn-sm" id="btn-upload-board" style="display:none">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Import Board
+            </button>
+        </div>
+    </header>
+
+    <!-- API Compat Warning -->
+    <div class="api-warning" id="api-warning">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Your browser doesn't support the File System API. Using import/export mode instead (Chrome or Edge recommended for full workspace support).
+    </div>
+
+    <!-- ── Hero (no workspace selected) ── -->
+    <section class="hero" id="hero">
+        <div class="hero-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            Standalone Mode
+        </div>
+        <h2>Build Visual<br>Workflows Locally</h2>
+        <p>Your boards, nodes, and libraries — stored directly on your machine. No account needed.</p>
+        <div class="hero-actions">
+            <button class="btn btn-primary" id="btn-open-workspace">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                Open Workspace Folder
+            </button>
+            <button class="btn btn-secondary" id="btn-continue-without">
+                Continue Without Workspace
+            </button>
+        </div>
+        <p class="hero-note">The workspace is a local folder where your boards and custom nodes are saved.</p>
+    </section>
+
+    <!-- ── Workspace View (workspace selected) ── -->
+    <div class="workspace-view" id="workspace-view">
+
+        <!-- Active workspace info -->
+        <div class="workspace-card">
+            <div class="workspace-card-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <div class="workspace-card-info">
+                <h3 id="workspace-name">Workspace</h3>
+                <p id="workspace-meta">Loading...</p>
+            </div>
+            <div class="workspace-card-actions">
+                <button class="btn btn-secondary btn-sm" id="btn-change-workspace-2">
+                    Change Folder
+                </button>
+            </div>
+        </div>
+
+        <!-- Boards Section -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#64748b"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/></svg>
+                    <h2>Boards</h2>
+                    <span class="count" id="board-count">0</span>
+                </div>
+                <div style="display:flex; gap:8px">
+                    <button class="btn btn-secondary btn-sm" id="btn-import-board">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Import
+                    </button>
+                </div>
+            </div>
+            <div class="board-grid" id="board-grid">
+                <!-- Cards injected by JS -->
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ── Modal: New Board ── -->
+<div class="modal-overlay" id="modal-new-board">
+    <div class="modal">
+        <h3>Create New Board</h3>
+        <p>Give your board a name. It will be saved as a <code>.ncboard.json</code> file in your workspace.</p>
+        <input type="text" class="modal-input" id="new-board-name" placeholder="My Board" maxlength="48" autocomplete="off">
+        <div class="modal-actions">
+            <button class="btn btn-ghost" id="modal-cancel">Cancel</button>
+            <button class="btn btn-primary" id="modal-create">Create &amp; Open</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Scripts ── -->
+<script src="./js/storage/WorkspaceManager.js"></script>
+<script>
+// ── Dashboard Controller ──────────────────────────────────────────────────────
+const WM = window.NodesCanvas.workspaceManager;
+
+// Elements
+const hero = document.getElementById('hero');
+const wsView = document.getElementById('workspace-view');
+const wsName = document.getElementById('workspace-name');
+const wsMeta = document.getElementById('workspace-meta');
+const boardGrid = document.getElementById('board-grid');
+const boardCount = document.getElementById('board-count');
+const apiWarning = document.getElementById('api-warning');
+const btnChangeWs = document.getElementById('btn-change-workspace');
+const modalNewBoard = document.getElementById('modal-new-board');
+const newBoardNameInput = document.getElementById('new-board-name');
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+(async () => {
+    // Check browser support
+    if (!WM.isSupported) {
+        apiWarning.classList.add('visible');
+    }
+
+    // Try to silently restore last workspace from IndexedDB
+    if (WM.isSupported) {
+        const restored = await WM.tryRestore();
+        if (restored) {
+            await showWorkspace();
+            return;
+        }
+    }
+
+    // No workspace restored — show hero with last name hint
+    const lastName = WM.getLastWorkspaceName();
+    if (lastName) {
+        wsMeta.textContent = `Last workspace: "${lastName}" — click Open Workspace to reconnect`;
+    }
+    showHero();
+})();
+
+// ── Views ─────────────────────────────────────────────────────────────────────
+function showHero() {
+    hero.classList.add('visible');
+    wsView.classList.remove('visible');
+    btnChangeWs.style.display = 'none';
+    document.getElementById('btn-upload-board').style.display = 'none';
+}
+
+async function showWorkspace() {
+    hero.classList.remove('visible');
+    wsView.classList.add('visible');
+    btnChangeWs.style.display = '';
+    document.getElementById('btn-upload-board').style.display = '';
+
+    // Update name
+    wsName.textContent = WM.workspaceName;
+
+    // Update meta
+    const boards = await WM.listBoards();
+    const nodes = await WM.listCustomNodes();
+    const libs = await WM.listLibs();
+    wsMeta.textContent = `${boards.length} board${boards.length !== 1 ? 's' : ''} · ${nodes.length} custom node${nodes.length !== 1 ? 's' : ''} · ${libs.length} lib${libs.length !== 1 ? 's' : ''}`;
+
+    await renderBoards(boards);
+}
+
+// ── Board Grid ────────────────────────────────────────────────────────────────
+async function renderBoards(boards) {
+    boardCount.textContent = boards.length;
+    boardGrid.innerHTML = '';
+
+    // ── "New Board" card ──
+    const newCard = document.createElement('div');
+    newCard.className = 'board-card-new';
+    newCard.innerHTML = `
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="3" width="18" height="18" rx="3"/><line x1="12" y1="8" x2="12" y2="16"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+        </svg>
+        <span>New Board</span>`;
+    newCard.addEventListener('click', openNewBoardModal);
+    boardGrid.appendChild(newCard);
+
+    // ── Existing boards ──
+    if (boards.length === 0) {
+        // empty — only the new card
+        return;
+    }
+
+    for (const board of boards) {
+        const meta = await WM.getBoardMeta(board.name);
+        const card = createBoardCard(board.name, meta);
+        boardGrid.appendChild(card);
+    }
+}
+
+function createBoardCard(name, meta) {
+    const dateStr = meta?.savedAt
+        ? new Date(meta.savedAt).toLocaleDateString('en', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+        : 'No date';
+    const nodeCount = meta?.nodes || 0;
+
+    const initials = name.slice(0, 2).toUpperCase();
+
+    const card = document.createElement('div');
+    card.className = 'board-card';
+    card.style.animationDelay = `${Math.random() * 0.15}s`;
+    card.innerHTML = `
+        <div class="board-card-thumb">${initials}</div>
+        <div class="board-card-body">
+            <div class="board-card-name" title="${name}">${name}</div>
+            <div class="board-card-meta">
+                <span class="board-card-date">${dateStr} · ${nodeCount} node${nodeCount !== 1 ? 's' : ''}</span>
+                <div class="board-card-actions">
+                    <button class="btn btn-ghost btn-icon btn-export" title="Export">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    </button>
+                    <button class="btn btn-danger btn-icon btn-delete" title="Delete">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>`;
+
+    // Open on click (not on action buttons)
+    card.addEventListener('click', (e) => {
+        if (e.target.closest('.board-card-actions')) return;
+        openBoard(name);
+    });
+
+    // Export
+    card.querySelector('.btn-export').addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const data = await WM.loadBoard(name);
+        if (data) WM.downloadBoard(name, data);
+    });
+
+    // Delete
+    card.querySelector('.btn-delete').addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (confirm(`Delete "${name}"? This cannot be undone.`)) {
+            await WM.deleteBoard(name);
+            card.remove();
+            const count = parseInt(boardCount.textContent) - 1;
+            boardCount.textContent = count;
+        }
+    });
+
+    return card;
+}
+
+// ── Open Board ────────────────────────────────────────────────────────────────
+async function openBoard(name) {
+    // Store active board info for the editor
+    if (WM.isReady) {
+        const data = await WM.loadBoard(name);
+        localStorage.setItem('nc_standalone_mode', 'true');
+        localStorage.setItem('nc_active_board_name', name);
+        localStorage.setItem('nc_board_data', JSON.stringify(data));
+    } else {
+        // no-filesystem mode: data is already in localStorage from import
+        localStorage.setItem('nc_standalone_mode', 'true');
+    }
+    window.location.href = './editor_local.html';
+}
+
+// ── New Board Modal ────────────────────────────────────────────────────────────
+function openNewBoardModal() {
+    newBoardNameInput.value = '';
+    modalNewBoard.classList.add('open');
+    setTimeout(() => newBoardNameInput.focus(), 100);
+}
+
+function closeNewBoardModal() {
+    modalNewBoard.classList.remove('open');
+}
+
+document.getElementById('modal-cancel').addEventListener('click', closeNewBoardModal);
+modalNewBoard.addEventListener('click', (e) => { if (e.target === modalNewBoard) closeNewBoardModal(); });
+
+newBoardNameInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('modal-create').click();
+    if (e.key === 'Escape') closeNewBoardModal();
+});
+
+document.getElementById('modal-create').addEventListener('click', async () => {
+    let name = newBoardNameInput.value.trim().replace(/[^a-zA-Z0-9_\- ]/g, '');
+    if (!name) { newBoardNameInput.focus(); return; }
+
+    // Save empty board
+    const emptyBoard = { nodes: [], connections: [], transform: { x: 0, y: 0, scale: 1 } };
+    if (WM.isReady) {
+        await WM.saveBoard(name, emptyBoard);
+    }
+    closeNewBoardModal();
+    openBoard(name);
+});
+
+// ── Button handlers ───────────────────────────────────────────────────────────
+document.getElementById('btn-open-workspace').addEventListener('click', async () => {
+    const opened = await WM.open();
+    if (opened) await showWorkspace();
+});
+
+document.getElementById('btn-continue-without').addEventListener('click', () => {
+    localStorage.setItem('nc_standalone_mode', 'true');
+    localStorage.removeItem('nc_active_board_name');
+    window.location.href = './editor_local.html';
+});
+
+document.getElementById('btn-change-workspace').addEventListener('click', async () => {
+    const opened = await WM.open();
+    if (opened) await showWorkspace();
+});
+
+document.getElementById('btn-change-workspace-2').addEventListener('click', async () => {
+    const opened = await WM.open();
+    if (opened) await showWorkspace();
+});
+
+// Import board (no-filesystem fallback)
+function importBoard() {
+    WM.uploadBoard(async (name, data) => {
+        if (WM.isReady) {
+            await WM.saveBoard(name, data);
+            const boards = await WM.listBoards();
+            await renderBoards(boards);
+        } else {
+            localStorage.setItem('nc_board_data', JSON.stringify(data));
+            openBoard(name);
+        }
+    });
+}
+document.getElementById('btn-import-board').addEventListener('click', importBoard);
+document.getElementById('btn-upload-board').addEventListener('click', importBoard);
+</script>
+
+</body>
+</html>

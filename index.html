@@ -1,251 +1,216 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nodes Canvas Studio</title>
+    <title>Nodes Canvas - Launcher</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --accent-green: #00dc82;
+            --accent-blue: #3b82f6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
 
-    <!-- CSS Dependencies -->
-    <link rel="stylesheet" href="./css/main.css?v=1.4">
-    <link rel="stylesheet" href="./css/canvas.css?v=1.4">
-    <link rel="stylesheet" href="./css/node.css?v=1.5">
-    <link rel="stylesheet" href="./css/menu.css?v=1.4">
-    <link rel="stylesheet" href="./css/settings_menu.css?v=1.4">
-    <link rel="stylesheet" href="./css/sidebar.css?v=1.4">
-    <link rel="stylesheet" href="./css/popup.css?v=1.4">
-    <link rel="stylesheet" href="./css/code_inspector.css?v=1.4">
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(0, 220, 130, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
+        }
+
+        .launcher-container {
+            width: 100%;
+            max-width: 800px;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .logo-container {
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .logo-container h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            letter-spacing: -0.05em;
+            background: linear-gradient(to right, #ffffff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .logo-container p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .modes-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .mode-card {
+            background-color: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 40px 30px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .mode-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .mode-card.local:hover {
+            border-color: rgba(0, 220, 130, 0.4);
+            box-shadow: 0 20px 40px rgba(0, 220, 130, 0.1);
+        }
+
+        .mode-card.cloud:hover {
+            border-color: rgba(59, 130, 246, 0.4);
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.1);
+        }
+
+        .mode-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .mode-card.local .mode-icon {
+            background: linear-gradient(135deg, #059669, #10b981);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);
+        }
+
+        .mode-card.cloud .mode-icon {
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2);
+        }
+
+        .mode-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .mode-desc {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Decorative glows */
+        .glow {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 70%);
+            border-radius: 50%;
+            top: -50px;
+            right: -50px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        
+        .mode-card.local:hover .glow {
+            background: radial-gradient(circle, rgba(0, 220, 130, 0.15) 0%, transparent 70%);
+            opacity: 1;
+        }
+        
+        .mode-card.cloud:hover .glow {
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+            opacity: 1;
+        }
+    </style>
 </head>
-
 <body>
-    <!-- Main Canvas Area -->
-    <div id="canvas-container" class="canvas-container">
-        <div id="canvas-layer" class="canvas-layer">
-            <!-- Nodes and Connections will be injected here -->
-            <svg id="connections-layer" class="connections-layer"></svg>
+    <div class="launcher-container">
+        <div class="logo-container">
+            <h1>Nodes Canvas</h1>
+            <p>Select your workspace environment</p>
+        </div>
+
+        <div class="modes-grid">
+            <!-- Local Standalone Mode -->
+            <a href="dashboard_local.html" class="mode-card local" onclick="setMode(true)">
+                <div class="glow"></div>
+                <div class="mode-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                </div>
+                <h3 class="mode-title">Local Standalone</h3>
+                <p class="mode-desc">Work directly with files on your local hard drive. Fast and private, without relying on cloud credentials.</p>
+            </a>
+
+            <!-- Cloud Mode -->
+            <a href="dashboard_cloud.html" class="mode-card cloud" onclick="setMode(false)">
+                <div class="glow"></div>
+                <div class="mode-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                        <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+                        <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+                    </svg>
+                </div>
+                <h3 class="mode-title">Cloud Environment</h3>
+                <p class="mode-desc">Collaborate and sync to Xano database. Login seamlessly to access your online workspaces.</p>
+            </a>
         </div>
     </div>
 
-    <!-- Settings Dropdown (Top Right) -->
-    <div class="settings-container">
-        <button id="btn-settings" class="settings-btn glass-panel" title="Settings">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="3" />
-                <path
-                    d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l-.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
-            </svg>
-        </button>
-        <div id="settings-dropdown" class="settings-dropdown glass-panel hidden">
-            <!-- User Profile Info -->
-            <div id="user-info-display" class="dropdown-user-info" style="display: none;"></div>
-
-            <div class="settings-item" id="btn-login">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    style="margin-right:8px;">
-                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                    <polyline points="10 17 15 12 10 7" />
-                    <line x1="15" y1="12" x2="3" y2="12" />
-                </svg>
-                <span>Login</span>
-            </div>
-
-            <div id="board-info-section" style="display: none;">
-                <div class="settings-divider"></div>
-                <div class="board-header-row">
-                    <span id="label-board-name" class="board-name-label">{ New Board }</span>
-                    <button id="btn-save-remote" class="save-icon-btn" title="Save Changes">
-                        <i data-lucide="save"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div id="board-persistence-actions" style="display: none;">
-                <div class="settings-divider"></div>
-                <div class="settings-item" id="btn-logout" style="display: none;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        style="margin-right:8px;">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                        <polyline points="16 17 21 12 16 7" />
-                    </svg>
-                    <line x1="21" y1="12" x2="9" y2="12" />
-                    </svg>
-                    <span>Logout</span>
-                </div>
-                <div class="settings-item" id="btn-save-board">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        style="margin-right:8px;">
-                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-                        <polyline points="17 21 17 13 7 13 7 21" />
-                        <polyline points="7 3 7 8 15 8" />
-                    </svg>
-                    <span>Save Board</span>
-                </div>
-                <div class="settings-item" id="btn-my-boards">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        style="margin-right:8px;">
-                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2zM19 12H5" />
-                    </svg>
-                    <span>My Boards</span>
-                </div>
-            </div>
-
-            <div class="settings-divider"></div>
-            <div class="settings-item" id="toggle-theme">
-                <span>Dark Mode</span>
-                <div class="toggle-switch left"></div>
-            </div>
-            <div class="settings-divider"></div>
-            <div class="settings-item settings-item-danger" id="btn-clear-cache">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    style="margin-right:8px;">
-                    <polyline points="3 6 5 6 21 6" />
-                    <path d="M19 6l-1 14H6L5 6" />
-                    <path d="M10 11v6" />
-                    <path d="M14 11v6" />
-                    <path d="M9 6V4h6v2" />
-                </svg>
-                <span>Clear Canvas</span>
-            </div>
-            <div class="settings-divider"></div>
-            <div class="settings-item" id="btn-export-js">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    style="margin-right:8px;">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
-                <span>View Code</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Code Inspector Panel (Right Side) -->
-    <div id="code-inspector" class="code-inspector ci-hidden">
-        <div class="ci-header">
-            <span class="ci-title">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    style="margin-right:6px;">
-                    <polyline points="16 18 22 12 16 6" />
-                    <polyline points="8 6 2 12 8 18" />
-                </svg>
-                Code Inspector
-            </span>
-            <div class="ci-actions">
-                <button id="code-inspector-refresh" class="ci-btn" title="Regenerate">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="23 4 23 10 17 10" />
-                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-                    </svg>
-                </button>
-                <button id="code-inspector-download" class="ci-btn ci-btn-primary" title="Download .js">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                    Download .js
-                </button>
-                <button id="code-inspector-close" class="ci-btn" title="Close">&times;</button>
-            </div>
-        </div>
-        <pre id="code-inspector-content" class="ci-code"></pre>
-    </div>
-
-    <!-- Left Sidebar (Treeview) -->
-    <div id="left-sidebar" class="sidebar glass-panel closed">
-        <button id="btn-toggle-sidebar" class="sidebar-toggle-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 18l6-6-6-6" />
-            </svg>
-        </button>
-        <div class="sidebar-content">
-            <div class="sidebar-header">
-                <h3 id="sidebar-library-title">Library</h3>
-            </div>
-            <div class="sidebar-search-container">
-                <input type="text" id="sidebar-search" placeholder="Search nodes..." autocomplete="off">
-                <div class="sidebar-search-separator"></div>
-            </div>
-            <div id="treeview-container" class="treeview">
-                <!-- Folders and Node Types will be injected here -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Floating Bottom Menu -->
-    <div id="bottom-menu" class="bottom-menu glass-panel">
-        <button id="btn-select" class="menu-btn active" title="Select Tool">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" />
-            </svg>
-        </button>
-        <div class="menu-separator"></div>
-        <button id="btn-add-node" class="menu-btn" title="Add Node">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                <line x1="12" y1="8" x2="12" y2="16" />
-                <line x1="8" y1="12" x2="16" y2="12" />
-            </svg>
-        </button>
-        <div class="menu-separator"></div>
-        <!-- Run Mode -->
-        <button id="btn-run" class="menu-btn menu-btn-run" title="Run Mode — executes continuously like Grasshopper">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                <polygon points="5,3 19,12 5,21" />
-            </svg>
-        </button>
-    </div>
-
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-
-    <!-- Monaco Editor via CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
     <script>
-        // Configure the Monaco AMD path so it can load its own workers
-        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
-        window.monacoReady = new Promise(resolve => {
-            require(['vs/editor/editor.main'], () => resolve(window.monaco));
-        });
+        function setMode(isLocal) {
+            localStorage.setItem('nc_standalone_mode', isLocal ? 'true' : 'false');
+        }
+        
+        // Auto-clear active board variable so returning here wipes session cache properly
+        localStorage.removeItem('nc_active_board_name');
     </script>
-
-    <!-- JS Dependencies (Loaded in order for Global Namespace Architecture) -->
-    <script src="./js/utils/utils.js?v=1.4"></script>
-    <script src="./js/nodes/NodeRegistry.js?v=1.4"></script>
-    <script src="./js/nodes/BaseNode.js?v=1.4"></script>
-    <script src="./js/nodes/NodeIcons.js?v=1.4"></script>
-    <script src="./js/nodes/NodeFactory.js?v=1.4"></script>
-    <script src="./js/core/Canvas.js?v=1.4"></script>
-    <script src="./js/nodes/Node.js?v=1.4"></script>
-    <!-- Data Nodes -->
-    <script src="./js/nodes/data/ManualDataNode.js?v=1.5"></script>
-    <script src="./js/nodes/data/CallDataNode.js?v=1.5"></script>
-    <script src="./js/nodes/data/SliderNode.js?v=1.5"></script>
-    <script src="./js/nodes/data/ValueListNode.js?v=1.5"></script>
-    <script src="./js/nodes/data/DataHolderNode.js?v=1.5"></script>
-    <!-- Web Nodes -->
-    <script src="./js/nodes/web/HttpRequestNode.js?v=1.5"></script>
-    <!-- Logic Nodes -->
-    <script src="./js/nodes/logic/ExpressionNode.js?v=1.5"></script>
-    <script src="./js/nodes/logic/BranchNode.js?v=1.5"></script>
-    <!-- UI Components -->
-    <script src="./js/nodes/ui-components/ViewerNode.js?v=1.5"></script>
-    <script src="./js/core/Connection.js?v=1.4"></script>
-    <script src="./js/core/AuthManager.js?v=1.4"></script>
-    <script src="./js/core/Registry.js?v=1.4"></script>
-    <script src="./js/core/CanvasState.js?v=1.4"></script>
-    <script src="./js/nodes/ui-components/NodeWidgets.js?v=1.5"></script>
-    <script src="./js/core/LibrariesManager.js?v=1.4"></script>
-    <script src="./js/core/GraphEngine.js?v=1.4"></script>
-    <script src="./js/ui/PopupManager.js?v=1.4"></script>
-    <script src="./js/ui/BottomMenu.js?v=1.4"></script>
-    <script src="./js/ui/ContextMenu.js?v=1.4"></script>
-    <script src="./js/ui/Settings.js?v=1.4"></script>
-    <script src="./js/ui/Sidebar.js?v=1.4"></script>
-    <script src="./js/ui/SidebarContextMenu.js?v=1.4"></script>
-    <script src="./js/ui/LibrariesPanel.js?v=1.4"></script>
-    <script src="./js/ui/CodeInspector.js?v=1.4"></script>
-    <script src="./js/app.js?v=1.4"></script>
 </body>
-
 </html>

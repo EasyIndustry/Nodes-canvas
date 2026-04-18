@@ -3,7 +3,52 @@ window.NodesCanvas = window.NodesCanvas || {};
 window.NodesCanvas._clipboard = []; // Global clipboard for nodes
 
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("Nodes Canvas Studio Initializing... [v1.4]");
+    console.log("Nodes Canvas Studio Initializing... [v1.5]");
+
+    // ── Standalone mode setup ──────────────────────────────────────────────────
+    if (localStorage.getItem('nc_standalone_mode') === 'true') {
+        const bar = document.getElementById('standalone-bar');
+        const boardLabel = document.getElementById('standalone-board-name');
+        if (bar) bar.style.display = 'flex';
+        const boardName = localStorage.getItem('nc_active_board_name');
+        if (boardLabel && boardName) boardLabel.textContent = '· ' + boardName;
+
+        // Restore workspace dir handle so Save writes to file (not just localStorage)
+        const wm = window.NodesCanvas.workspaceManager;
+        if (wm && wm.isSupported) {
+            wm.tryRestore().then(restored => {
+                if (restored) console.log('[App] Workspace restored:', restored);
+            });
+        }
+
+        let _dirtyCount = 0;
+        let _lastCleanTime = Date.now();
+
+        window.NodesCanvas._markDirty = () => {
+            _dirtyCount++;
+            
+            // Add tiny indicator strictly for the settings menu if open
+            const dropSaveStatus = document.getElementById('btn-save-status');
+            if (dropSaveStatus) {
+                dropSaveStatus.style.opacity = '1';
+                dropSaveStatus.textContent = '● Pndg';
+                dropSaveStatus.style.color = '#f59e0b';
+            }
+        };
+
+        window.NodesCanvas._markClean = () => {
+            _dirtyCount = 0;
+            _lastCleanTime = Date.now();
+            
+            const dropSaveStatus = document.getElementById('btn-save-status');
+            if (dropSaveStatus) {
+                dropSaveStatus.style.opacity = '1';
+                dropSaveStatus.textContent = '✓ Saved';
+                dropSaveStatus.style.color = '#00dc82';
+                setTimeout(() => { if (dropSaveStatus.textContent === '✓ Saved') dropSaveStatus.style.opacity = '0'; }, 2000);
+            }
+        };
+    }
 
     // Verify critical components
     const hasSetTransform = window.NodesCanvas.Canvas && window.NodesCanvas.Canvas.prototype.setTransform;

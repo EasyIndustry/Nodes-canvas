@@ -161,6 +161,7 @@ window.NodesCanvas.Registry = {
 
     _notify() {
         this._listeners.forEach(cb => cb(this.folders));
+        if (window.NodesCanvas._markDirty) window.NodesCanvas._markDirty();
     },
 
     triggerUpdate() {
@@ -468,10 +469,61 @@ window.NodesCanvas.Registry = {
         });
 
         this._notify();
+
+    },
+
+    // ─── Local File System (Standalone) Storage ───────────────────────────────
+
+    async saveLocal() {
+        const wm = window.NodesCanvas.workspaceManager;
+        if (!wm) return false;
+
+        const cleanConfig = window.NodesCanvas.Utils.clone(this.folders);
+        const clean = (folder) => {
+            if (folder.nodes) {
+                folder.nodes = folder.nodes.filter(n => n.editable !== false);
+            }
+            if (folder.subfolders) folder.subfolders.forEach(clean);
+        };
+        cleanConfig.forEach(clean);
+        
+        await wm.saveRegistry(cleanConfig);
+        return true;
+    },
+
+    async loadFromLocal() {
+        const wm = window.NodesCanvas.workspaceManager;
+        if (!wm) return;
+
+        let retries = 10;
+        while (!wm.isReady && retries > 0) {
+            await new Promise(r => setTimeout(r, 100));
+            retries--;
+        }
+
+        const data = await wm.loadRegistry();
+        if (data && Array.isArray(data)) {
+            this.folders = data;
+            console.log(`[Registry] Loaded local registry from workspace`);
+        }
+        
+        this.syncBuiltInFolders();
     }
 };
 
-// Auto-load from Xano if already logged in (handles refresh/timing)
-if (window.NodesCanvas.AuthManager && window.NodesCanvas.AuthManager.isLoggedIn()) {
-    window.NodesCanvas.Registry.loadFromXano();
-}
+
+
+
+
+// Auto-load logic depending on mode
+document.addEventListener("DOMContentLoaded", () => {
+    if (localStorage.getItem('nc_standalone_mode') === 'true') {
+        window.NodesCanvas.Registry.loadFromLocal();
+    } else {
+        if (window.NodesCanvas.AuthManager && window.NodesCanvas.AuthManager.isLoggedIn()) {
+            window.NodesCanvas.Registry.loadFromXano();
+        } else {
+            window.NodesCanvas.Registry.syncBuiltInFolders();
+        }
+    }
+});
