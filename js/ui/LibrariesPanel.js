@@ -83,17 +83,17 @@ window.NodesCanvas.LibrariesPanel = {
         }
         html += '</div>';
         
-        // CDN libs
+        // Search libs
         html += '<div class="lp-section">';
-        html += '<h4 class="lp-section-title">CDN Libraries</h4>';
-        for (var k = 0; k < cdns.length; k++) {
-            var cdn = cdns[k];
-            html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;">';
-            html += '<input type="checkbox" class="lib-cdn-cb" data-lib="' + cdn.id + '">';
-            html += '<span style="font-weight:600;font-size:13px;">' + cdn.name + '</span>';
-            html += '<span style="font-size:11px;opacity:0.5;">' + cdn.description + '</span>';
-            html += '</div>';
-        }
+        html += '<h4 class="lp-section-title">NPM / CDN Buscar</h4>';
+        html += '<input type="text" id="lp-search-input" placeholder="Buscar librería (ej. lodash)..." style="width:100%; border:1px solid #333; background:#1e1e1e; color:#fff; font-size:12px; border-radius:4px; padding:6px; margin-bottom:8px; outline:none;" autocomplete="off">';
+        html += '<div id="lp-search-results" style="max-height: 150px; overflow-y: auto;"></div>';
+        html += '</div>';
+        
+        // Workspace libs
+        html += '<div class="lp-section">';
+        html += '<h4 class="lp-section-title">Instaladas en Workspace</h4>';
+        html += '<div id="lp-installed-libs">Cargando...</div>';
         html += '</div>';
         
         html += '</div>'; // end content
@@ -105,6 +105,48 @@ window.NodesCanvas.LibrariesPanel = {
         document.body.appendChild(div);
 
         this.bindEvents();
+        this.renderInstalledLibs();
+    },
+
+    renderInstalledLibs: async function() {
+        var wm = window.NodesCanvas.workspaceManager;
+        var container = document.getElementById('lp-installed-libs');
+        if (!container) return;
+        
+        if (!wm || !wm.isReady) {
+            container.innerHTML = '<div style="font-size:11px;opacity:0.5;">Workspace no disponible</div>';
+            return;
+        }
+
+        try {
+            var files = await wm.listLibs();
+            if (files.length === 0) {
+                container.innerHTML = '<div style="font-size:11px;opacity:0.5;">No hay librerías instaladas</div>';
+                return;
+            }
+
+            var html = '';
+            files.forEach(f => {
+                html += '<div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0;">';
+                html += '<span style="font-size:12px; font-weight:bold; color:#00dc82;">' + f + '</span>';
+                html += '<button class="btn btn-sm btn-ghost btn-del-lib" data-file="' + f + '" style="color:#ef4444; padding:2px 6px;">Eliminar</button>';
+                html += '</div>';
+            });
+            container.innerHTML = html;
+
+            var delBtns = container.querySelectorAll('.btn-del-lib');
+            delBtns.forEach(btn => {
+                btn.onclick = async function() {
+                    var file = this.getAttribute('data-file');
+                    if(confirm("¿Eliminar " + file + "? Se requerirá recargar la página para limpiar memoria.")) {
+                        await wm.deleteLib(file);
+                        window.NodesCanvas.LibrariesPanel.renderInstalledLibs();
+                    }
+                };
+            });
+        } catch(e) {
+            container.innerHTML = '<div style="font-size:11px;opacity:0.5;">Error al cargar</div>';
+        }
     },
 
     bindEvents: function() {
@@ -114,20 +156,98 @@ window.NodesCanvas.LibrariesPanel = {
         var closeBtn = document.getElementById('lp-close-btn');
         if (closeBtn) {
             closeBtn.onclick = function() {
-                console.log('[LibrariesPanel] Close button clicked');
                 self.hide();
             };
         }
         
-        // Checkboxes
-        var checkboxes = document.querySelectorAll('.lib-cdn-cb');
-        for (var i = 0; i < checkboxes.length; i++) {
-            checkboxes[i].onchange = function() {
-                var libId = this.getAttribute('data-lib');
-                window.NodesCanvas.LibrariesManager.toggleCDN(libId);
-                window.NodesCanvas.LibrariesManager.savePreferences();
+        // Search Input
+        var searchInput = document.getElementById('lp-search-input');
+        if (searchInput) {
+            var debounceTimer;
+            searchInput.onkeyup = function(e) {
+                if (e.key === 'Enter') {
+                    self.searchLibs(this.value);
+                } else {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => {
+                        if (this.value.length >= 3) {
+                            self.searchLibs(this.value);
+                        } else if (this.value.length === 0) {
+                            document.getElementById('lp-search-results').innerHTML = '';
+                        }
+                    }, 500);
+                }
             };
         }
+    },
+
+    searchLibs: function(query) {
+        if (!query.trim()) return;
+        var resultsCont = document.getElementById('lp-search-results');
+        resultsCont.innerHTML = '<div style="font-size:11px;opacity:0.5;">Buscando...</div>';
+        
+        fetch('https://api.cdnjs.com/libraries?search=' + encodeURIComponent(query) + '&fields=version,description&limit=10')
+            .then(res => res.json())
+            .then(data => {
+                resultsCont.innerHTML = '';
+                if (!data.results || data.results.length === 0) {
+                    resultsCont.innerHTML = '<div style="font-size:11px;opacity:0.5;">No se encontraron resultados</div>';
+                    return;
+                }
+                
+                data.results.forEach(lib => {
+                    var row = document.createElement('div');
+                    row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid #333;';
+                    
+                    row.innerHTML = `
+                        <div style="flex:1; margin-right:8px; overflow:hidden;">
+                            <div style="font-weight:600;font-size:13px;color:#ececf1;">${lib.name} <span style="font-size:10px;color:#00dc82;">v${lib.version}</span></div>
+                            <div style="font-size:11px;opacity:0.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${lib.description || ''}">${lib.description || ''}</div>
+                        </div>
+                        <button class="btn btn-sm btn-ghost btn-install" style="color:#00dc82; padding:4px 8px; font-weight:bold;">Add</button>
+                    `;
+                    
+                    row.querySelector('.btn-install').onclick = async function() {
+                        this.textContent = '...';
+                        try {
+                            var wm = window.NodesCanvas.workspaceManager;
+                            if (!wm || !wm.isReady) {
+                                alert("Workspace no está listo/soportado.");
+                                this.textContent = 'Error';
+                                return;
+                            }
+                            
+                            var res = await fetch('https://api.cdnjs.com/libraries/' + lib.name + '?fields=latest');
+                            var libData = await res.json();
+                            var url = libData.latest;
+                            if(!url) throw new Error("URL no encontrada");
+                            
+                            var sourceRes = await fetch(url);
+                            var sourceCode = await sourceRes.text();
+                            
+                            // Save to workspace
+                            await wm.saveLib(lib.name + '.js', sourceCode);
+                            
+                            // Inject instantly
+                            await wm.injectLib(lib.name + '.js');
+                            
+                            this.textContent = 'Ok';
+                            this.style.color = '#fff';
+                            this.disabled = true;
+                            
+                            window.NodesCanvas.LibrariesPanel.renderInstalledLibs();
+                        } catch(err) {
+                            console.error(err);
+                            this.textContent = 'Err';
+                        }
+                    };
+                    
+                    resultsCont.appendChild(row);
+                });
+            })
+            .catch(err => {
+                resultsCont.innerHTML = '<div style="font-size:11px;color:#ef4444;">Error al buscar</div>';
+            });
     }
 };
 

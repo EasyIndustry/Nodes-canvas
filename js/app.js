@@ -5,21 +5,39 @@ window.NodesCanvas._clipboard = []; // Global clipboard for nodes
 document.addEventListener("DOMContentLoaded", () => {
     console.log("Nodes Canvas Studio Initializing... [v1.5]");
 
-    // ── Standalone mode setup ──────────────────────────────────────────────────
-    if (localStorage.getItem('nc_standalone_mode') === 'true') {
-        const bar = document.getElementById('standalone-bar');
-        const boardLabel = document.getElementById('standalone-board-name');
-        if (bar) bar.style.display = 'flex';
-        const boardName = localStorage.getItem('nc_active_board_name');
-        if (boardLabel && boardName) boardLabel.textContent = '· ' + boardName;
+    // ── Mode bar setup (standalone vs cloud) ──────────────────────────────────
+    const SK = window.NodesCanvas.StorageKeys;
+    const isStandalone = localStorage.getItem(SK.STANDALONE_MODE) === 'true';
+    const standaloneBar = document.getElementById('standalone-bar');
+    const cloudBar = document.getElementById('cloud-bar');
+    const loginBtn = document.getElementById('btn-login');
 
-        // Restore workspace dir handle so Save writes to file (not just localStorage)
-        const wm = window.NodesCanvas.workspaceManager;
-        if (wm && wm.isSupported) {
-            wm.tryRestore().then(restored => {
-                if (restored) console.log('[App] Workspace restored:', restored);
-            });
+    if (isStandalone) {
+        if (standaloneBar) standaloneBar.style.display = 'flex';
+        if (cloudBar) cloudBar.style.display = 'none';
+        if (loginBtn) loginBtn.style.display = 'none';
+        
+        // Sync URL with board name
+        const urlParams = new URLSearchParams(window.location.search);
+        let boardName = urlParams.get('board');
+        
+        if (boardName) {
+            localStorage.setItem(SK.ACTIVE_BOARD_NAME, boardName);
+        } else {
+            boardName = localStorage.getItem(SK.ACTIVE_BOARD_NAME);
+            if (boardName) {
+                window.history.replaceState(null, '', '?board=' + encodeURIComponent(boardName));
+            }
         }
+        
+        const boardLabel = document.getElementById('standalone-board-name');
+        if (boardLabel && boardName) boardLabel.textContent = '· ' + boardName;
+    } else {
+        if (cloudBar) cloudBar.style.display = 'flex';
+        if (standaloneBar) standaloneBar.style.display = 'none';
+    }
+
+    if (isStandalone) {
 
         let _dirtyCount = 0;
         let _lastCleanTime = Date.now();
@@ -174,15 +192,44 @@ document.addEventListener("DOMContentLoaded", () => {
     // 5. Restore saved board if it exists
     window.NodesCanvas.Registry.syncBuiltInFolders();
 
-    // Safety check to ensure canvas is ready before loading state
-    if (window.NodesCanvas.canvas) {
-        const restored = window.NodesCanvas.CanvasState.load();
-        if (restored) {
-            console.log('[App] Board restored from localStorage');
+    const finalizeLoad = () => {
+        // Safety check to ensure canvas is ready before loading state
+        if (window.NodesCanvas.canvas) {
+            const restored = window.NodesCanvas.CanvasState.load();
+            if (restored) {
+                console.log('[App] Board restored from localStorage');
+            }
+        } else {
+            console.error('[App] Canvas component forgot to initialize!');
+        }
+        console.log("Nodes Canvas Studio Ready! Use F12 -> Console to see debug messages.");
+    };
+
+    if (isStandalone) {
+        const wm = window.NodesCanvas.workspaceManager;
+        if (wm && wm.isSupported) {
+            wm.tryRestore().then(async restored => {
+                if (restored) {
+                    await wm.injectAllLibs();
+                    await wm.loadAllCustomNodes();
+
+                    // If loading via deep link and we don't have board data cached, fetch it
+                    if (!localStorage.getItem(SK.BOARD_DATA)) {
+                        const boardName = localStorage.getItem(SK.ACTIVE_BOARD_NAME);
+                        if (boardName) {
+                            const data = await wm.loadBoard(boardName);
+                            if (data) {
+                                localStorage.setItem(SK.BOARD_DATA, JSON.stringify(data));
+                            }
+                        }
+                    }
+                }
+                finalizeLoad();
+            });
+        } else {
+            finalizeLoad();
         }
     } else {
-        console.error('[App] Canvas component forgot to initialize!');
+        finalizeLoad();
     }
-
-    console.log("Nodes Canvas Studio Ready! Use F12 -> Console to see debug messages.");
 });

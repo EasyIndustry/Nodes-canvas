@@ -25,7 +25,8 @@ window.NodesCanvas.Settings = class {
         }
 
         // Standalone mode: hide cloud/auth UI, inject save button
-        if (localStorage.getItem('nc_standalone_mode') === 'true') {
+        const SK = window.NodesCanvas.StorageKeys;
+        if (localStorage.getItem(SK.STANDALONE_MODE) === 'true') {
             this._initStandaloneUI();
         }
     }
@@ -253,11 +254,13 @@ window.NodesCanvas.Settings = class {
     }
 
     saveSettings() {
-        localStorage.setItem("nodesCanvasTheme", this.isDarkTheme ? "dark" : "light");
+        const SK = window.NodesCanvas.StorageKeys;
+        localStorage.setItem(SK.THEME, this.isDarkTheme ? "dark" : "light");
     }
 
     loadSettings() {
-        const savedTheme = localStorage.getItem("nodesCanvasTheme");
+        const SK = window.NodesCanvas.StorageKeys;
+        const savedTheme = localStorage.getItem(SK.THEME);
         if (savedTheme === "light") {
             this.isDarkTheme = false;
         }

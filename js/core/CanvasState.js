@@ -9,12 +9,14 @@ window.NodesCanvas.CanvasState = {
     _remoteSaveMinInterval: 15000,
     projectId: 'default_board',
 
+    get _SK() { return window.NodesCanvas.StorageKeys; },
+
     get isStandaloneMode() {
-        return localStorage.getItem('nc_standalone_mode') === 'true';
+        return localStorage.getItem(this._SK.STANDALONE_MODE) === 'true';
     },
 
     get activeBoardName() {
-        return localStorage.getItem('nc_active_board_name') || 'default';
+        return localStorage.getItem(this._SK.ACTIVE_BOARD_NAME) || 'default';
     },
 
     /** Schedule a debounced save (cache only, fast) */
@@ -33,7 +35,7 @@ window.NodesCanvas.CanvasState = {
             transform: window.NodesCanvas.canvas ? window.NodesCanvas.canvas.transform : { x: 0, y: 0, scale: 1 },
             updatedAt: Date.now()
         };
-        localStorage.setItem(`nodes_canvas_${this.projectId}`, JSON.stringify(state));
+        localStorage.setItem(this._SK.boardState(this.projectId), JSON.stringify(state));
     },
 
     /** Save current state to localStorage and optionally workspace file / Cloud */
@@ -46,7 +48,7 @@ window.NodesCanvas.CanvasState = {
         };
 
         // Always save to localStorage (fast, immediate)
-        localStorage.setItem(`nodes_canvas_${this.projectId}`, JSON.stringify(state));
+        localStorage.setItem(this._SK.boardState(this.projectId), JSON.stringify(state));
 
         // Standalone mode: also write to workspace file
         if (this.isStandaloneMode) {
@@ -130,14 +132,14 @@ window.NodesCanvas.CanvasState = {
     load() {
         // Standalone mode: board data was injected by the dashboard
         if (this.isStandaloneMode) {
-            const raw = localStorage.getItem('nc_board_data');
+            const raw = localStorage.getItem(this._SK.BOARD_DATA);
             if (raw) {
                 try {
                     const state = JSON.parse(raw);
                     // Clear injected data so refresh doesn't double-load
-                    localStorage.removeItem('nc_board_data');
+                    localStorage.removeItem(this._SK.BOARD_DATA);
                     // Also seed localStorage slot so subsequent saves work
-                    localStorage.setItem(`nodes_canvas_${this.projectId}`, raw);
+                    localStorage.setItem(this._SK.boardState(this.projectId), raw);
                     this._restoreState(state);
                     console.log('[CanvasState] Standalone board loaded:', this.activeBoardName);
                     return true;
@@ -148,7 +150,7 @@ window.NodesCanvas.CanvasState = {
             // Fallback to localStorage slot
         }
 
-        const raw = localStorage.getItem(`nodes_canvas_${this.projectId}`);
+        const raw = localStorage.getItem(this._SK.boardState(this.projectId));
         if (!raw) return false;
         try {
             const state = JSON.parse(raw);
@@ -162,7 +164,7 @@ window.NodesCanvas.CanvasState = {
 
     /** Wipe board and reset */
     clearAndReset() {
-        localStorage.removeItem(`nodes_canvas_${this.projectId}`);
+        localStorage.removeItem(this._SK.boardState(this.projectId));
         location.reload();
     },
 

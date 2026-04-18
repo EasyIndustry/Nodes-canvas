@@ -112,6 +112,31 @@ window.NodesCanvas.WorkspaceManager = class {
         }
     }
 
+    async deleteWorkspaceContents() {
+        if (!this._dirHandle) return;
+        try {
+            const dirs = ['boards', 'nodes', 'libs', 'exports'];
+            for (const d of dirs) {
+                try { await this._dirHandle.removeEntry(d, { recursive: true }); } catch (e) {}
+            }
+            try { await this._dirHandle.removeEntry('config.json'); } catch (e) {}
+            try { await this._dirHandle.removeEntry('registry.json'); } catch (e) {}
+
+            // Remove from recent
+            const recent = this.getRecent();
+            const filtered = recent.filter(r => r.name !== this.workspaceName);
+            localStorage.setItem(this._LS_KEY_RECENT, JSON.stringify(filtered));
+            localStorage.removeItem(this._LS_KEY_ACTIVE);
+            
+            await this.clearPersistedHandle();
+            
+            this._dirHandle = null;
+            this._ready = false;
+        } catch (e) {
+            console.error('[WorkspaceManager] Error deleting workspace contents:', e);
+        }
+    }
+
     // ─── File Helpers ─────────────────────────────────────────────────────────
 
     async _fileExists(path) {
@@ -257,6 +282,14 @@ window.NodesCanvas.WorkspaceManager = class {
 
     async loadLib(filename) {
         return this._readFile(filename, 'libs');
+    }
+
+    async saveLib(filename, code) {
+        await this._writeFile(filename, code, 'libs');
+    }
+
+    async deleteLib(filename) {
+        return this._deleteFile(filename, 'libs');
     }
 
     async injectLib(filename) {

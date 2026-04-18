@@ -482,12 +482,14 @@ window.NodesCanvas.LibrariesManager = {
     },
 
     savePreferences() {
-        localStorage.setItem('nodes_canvas_cdn_libs', JSON.stringify(this._activeCDNLibs));
+        const SK = window.NodesCanvas.StorageKeys;
+        localStorage.setItem(SK.CDN_LIBS, JSON.stringify(this._activeCDNLibs));
     },
 
     loadPreferences() {
         try {
-            const saved = localStorage.getItem('nodes_canvas_cdn_libs');
+            const SK = window.NodesCanvas.StorageKeys;
+            const saved = localStorage.getItem(SK.CDN_LIBS);
             if (saved) {
                 this._activeCDNLibs = JSON.parse(saved);
                 this.loadActiveCDNs();

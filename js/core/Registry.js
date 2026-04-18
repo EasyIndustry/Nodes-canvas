@@ -3,155 +3,9 @@
 window.NodesCanvas = window.NodesCanvas || {};
 
 window.NodesCanvas.Registry = {
-    // A folder can contain 'nodes' and 'subfolders'
-    folders: [
-        {
-            id: 'f_data',
-            name: 'Data',
-            editable: false,
-            nodes: [
-                {
-                    id: 'n_manual_data',
-                    type: 'manual-data',
-                    title: 'Manual Data',
-                    isSpecial: true,
-                    icon: 'database',
-                    editable: false
-                },
-                {
-                    id: 'n_call_data',
-                    type: 'call-data',
-                    title: 'Call Data',
-                    isSpecial: true,
-                    icon: 'external-link',
-                    editable: false
-                },
-                {
-                    id: 'n_slider',
-                    type: 'slider',
-                    title: 'Number Slider',
-                    isSlider: true,
-                    icon: 'sliders-horizontal',
-                    editable: false
-                },
-                {
-                    id: 'n_viewer',
-                    type: 'viewer',
-                    title: 'Viewer',
-                    icon: 'eye',
-                    isSpecial: true,
-                    editable: false
-                },
-                {
-                    id: 'n_data_holder',
-                    type: 'data-holder',
-                    title: 'Data Holder',
-                    icon: 'archive',
-                    isSpecial: true,
-                    editable: false
-                },
-                {
-                    id: 'n_value_list',
-                    type: 'value-list',
-                    title: 'Value List',
-                    icon: 'list',
-                    isSpecial: true,
-                    editable: false
-                }
-            ],
-            subfolders: []
-        },
-        {
-            id: 'f_web',
-            name: 'Web',
-            editable: false,
-            nodes: [
-                {
-                    id: 'n_http_request',
-                    type: 'http-request',
-                    title: 'HTTP Request',
-                    icon: 'globe',
-                    editable: false
-                }
-            ],
-            subfolders: []
-        },
-        {
-            id: 'f_math',
-            name: 'Math',
-            editable: false,
-            nodes: [
-                {
-                    id: 'n_add',
-                    title: 'Add',
-                    builtIn: true,
-                    icon: 'plus',
-                    code: 'return { Result: Number(A) + Number(B) };',
-                    inputs: [{ id: 'A', label: 'A' }, { id: 'B', label: 'B' }],
-                    outputs: [{ id: 'Result', label: 'Result' }],
-                    editable: false
-                },
-                {
-                    id: 'n_mult',
-                    title: 'Multiply',
-                    builtIn: true,
-                    icon: 'x',
-                    code: 'return { Result: Number(A) * Number(B) };',
-                    inputs: [{ id: 'A', label: 'A' }, { id: 'B', label: 'B' }],
-                    outputs: [{ id: 'Result', label: 'Result' }],
-                    editable: false
-                }
-            ],
-            subfolders: []
-        },
-        {
-            id: 'f_logic',
-            name: 'Logic',
-            editable: false,
-            nodes: [
-                {
-                    id: 'n_and',
-                    title: 'And',
-                    builtIn: true,
-                    icon: 'check-square',
-                    code: 'return { Result: Boolean(A && B) };',
-                    inputs: [{ id: 'A', label: 'A' }, { id: 'B', label: 'B' }],
-                    outputs: [{ id: 'Result', label: 'Result' }],
-                    editable: false
-                }
-            ],
-            subfolders: []
-        },
-        {
-            id: 'f_utils',
-            name: 'Utilities',
-            editable: false,
-            nodes: [
-                {
-                    id: 'n_expression',
-                    type: 'expression',
-                    title: 'Expression',
-                    icon: 'variable',
-                    code: 'x * 2',
-                    inputs: [{ id: 'x', label: 'x' }],
-                    outputs: [{ id: 'Result', label: 'Result' }],
-                    editable: true
-                },
-
-                {
-                    id: 'n_branch',
-                    type: 'branch',
-                    title: 'Branch / If',
-                    icon: 'git-branch',
-                    branches: [{ id: 'If_1', code: 'x > 5' }],
-                    inputs: [{ id: 'x', label: 'x' }],
-                    outputs: [{ id: 'If_1', label: 'If_1'}, { id: 'Else', label: 'Else'}],
-                    editable: true
-                }
-            ],
-            subfolders: []
-        }
-    ],
+    // Folder tree. Seeded from window.NodesCanvas.DefaultNodes (js/config/defaultNodes.js)
+    // on DOMContentLoaded. A folder contains `nodes` and `subfolders`.
+    folders: [],
 
     _listeners: [],
 
@@ -330,16 +184,16 @@ window.NodesCanvas.Registry = {
         return false;
     },
 
-    async loadFromXano() {
-        const auth = window.NodesCanvas.AuthManager;
+    async loadFromCloud() {
+        const auth = window.NodesCanvas.CloudManager || window.NodesCanvas.AuthManager;
         if (!auth || !auth.isLoggedIn()) return;
 
-        console.log('[Registry] Loading custom features from Xano...');
+        console.log(`[Registry] Loading custom features from cloud (${auth.getBackendName ? auth.getBackendName() : 'default'})...`);
         const features = await auth.getCustomFeatures();
         if (!Array.isArray(features)) return;
 
-        // 1. Filter out built-in folders by keeping only those with f_ prefix (wait, built-ins have f_ prefix)
-        // Better: Keep folders where editable is false, remove others that are numeric (Xano)
+        // Seed built-ins first, then drop any editable (user) folders before re-adding them
+        this.syncBuiltInFolders();
         this.folders = this.folders.filter(f => f.editable === false);
 
         // 2. Map Xano features to Registry structure
@@ -397,79 +251,25 @@ window.NodesCanvas.Registry = {
         this._notify();
     },
 
-    /** Ensure built-in folders contain all required nodes after loading from state */
+    /** Ensure built-in folders + nodes from DefaultNodes config are present. */
     syncBuiltInFolders() {
-        // 1. Ensure Data Folder
-        let dataFolder = this._findFolder(this.folders, 'f_data');
-        if (!dataFolder) {
-            dataFolder = { id: 'f_data', name: 'Data', editable: false, nodes: [], subfolders: [] };
-            this.folders.unshift(dataFolder);
-        }
-
-        const ensureNode = (folder, nodeTemplate) => {
-            if (!folder.nodes.some(n => n.id === nodeTemplate.id)) {
-                folder.nodes.push({ ...nodeTemplate, editable: false });
+        const defaults = window.NodesCanvas.DefaultNodes || [];
+        defaults.forEach((defFolder, cfgIdx) => {
+            let folder = this._findFolder(this.folders, defFolder.id);
+            if (!folder) {
+                folder = { id: defFolder.id, name: defFolder.name, editable: false, nodes: [], subfolders: [] };
+                // Insert at the config-defined index when possible, else append
+                if (cfgIdx < this.folders.length) this.folders.splice(cfgIdx, 0, folder);
+                else this.folders.push(folder);
             }
-        };
-
-        ensureNode(dataFolder, { id: 'n_manual_data', title: 'Manual Data', icon: 'database', isSpecial: true });
-        ensureNode(dataFolder, { id: 'n_call_data', title: 'Call Data', icon: 'external-link', isSpecial: true });
-        ensureNode(dataFolder, { id: 'n_slider', title: 'Number Slider', icon: 'sliders-horizontal', isSlider: true });
-        ensureNode(dataFolder, { id: 'n_viewer', title: 'Viewer', icon: 'eye', isSpecial: true });
-        ensureNode(dataFolder, { id: 'n_data_holder', title: 'Data Holder', icon: 'archive', isSpecial: true, type: 'data-holder' });
-        ensureNode(dataFolder, { id: 'n_value_list', title: 'Value List', icon: 'list', isSpecial: true, type: 'value-list' });
-        
-        // 1.5 Ensure Web Folder
-        let webFolder = this._findFolder(this.folders, 'f_web');
-        if (!webFolder) {
-            webFolder = { id: 'f_web', name: 'Web', editable: false, nodes: [], subfolders: [] };
-            this.folders.splice(this.folders.indexOf(dataFolder) + 1, 0, webFolder);
-        }
-        ensureNode(webFolder, { id: 'n_http_request', title: 'HTTP Request', icon: 'globe', type: 'http-request' });
-
-        // 2. Ensure Math Folder
-        let mathFolder = this._findFolder(this.folders, 'f_math');
-        if (!mathFolder) {
-            mathFolder = { id: 'f_math', name: 'Math', editable: false, nodes: [], subfolders: [] };
-            this.folders.splice(this.folders.indexOf(dataFolder) + 1, 0, mathFolder);
-        }
-        ensureNode(mathFolder, {
-            id: 'n_add', title: 'Add', icon: 'plus', builtIn: true, inputs: [{ id: 'A', label: 'A' }, { id: 'B', label: 'B' }], outputs: [{ id: 'Result', label: 'Result' }],
-            code: 'return { Result: Number(A) + Number(B) };'
+            if (!folder.nodes) folder.nodes = [];
+            (defFolder.nodes || []).forEach(nodeTpl => {
+                if (!folder.nodes.some(n => n.id === nodeTpl.id)) {
+                    folder.nodes.push({ ...nodeTpl, editable: false });
+                }
+            });
         });
-        ensureNode(mathFolder, {
-            id: 'n_mult', title: 'Multiply', icon: 'x', builtIn: true, inputs: [{ id: 'A', label: 'A' }, { id: 'B', label: 'B' }], outputs: [{ id: 'Result', label: 'Result' }],
-            code: 'return { Result: Number(A) * Number(B) };'
-        });
-
-        // 3. Ensure Logic Folder
-        let logicFolder = this._findFolder(this.folders, 'f_logic');
-        if (!logicFolder) {
-            logicFolder = { id: 'f_logic', name: 'Logic', editable: false, nodes: [], subfolders: [] };
-            this.folders.splice(this.folders.indexOf(mathFolder) + 1, 0, logicFolder);
-        }
-        ensureNode(logicFolder, {
-            id: 'n_and', title: 'And', icon: 'check-square', builtIn: true, inputs: [{ id: 'A', label: 'A' }, { id: 'B', label: 'B' }], outputs: [{ id: 'Result', label: 'Result' }],
-            code: 'return { Result: Boolean(A && B) };'
-        });
-
-        // 4. Ensure Utilities Folder
-        let utilsFolder = this._findFolder(this.folders, 'f_utils');
-        if (!utilsFolder) {
-            utilsFolder = { id: 'f_utils', name: 'Utilities', editable: false, nodes: [], subfolders: [] };
-            this.folders.push(utilsFolder);
-        }
-        ensureNode(utilsFolder, {
-            id: 'n_expression', title: 'Expression', icon: 'variable', type: 'expression', inputs: [{ id: 'x', label: 'x' }], outputs: [{ id: 'Result', label: 'Result' }],
-            code: 'x * 2'
-        });
-        ensureNode(utilsFolder, {
-            id: 'n_branch', title: 'Branch / If', icon: 'git-branch', type: 'branch', inputs: [{ id: 'x', label: 'x' }], outputs: [{ id: 'If_1', label: 'If_1'}, { id: 'Else', label: 'Else'}],
-            branches: [{ id: 'If_1', code: 'x > 5' }]
-        });
-
         this._notify();
-
     },
 
     // ─── Local File System (Standalone) Storage ───────────────────────────────
@@ -515,15 +315,21 @@ window.NodesCanvas.Registry = {
 
 
 
+// Seed built-ins synchronously at module load so UI consumers rendering early
+// (e.g. Sidebar on DOMContentLoaded) see a populated tree even before any async
+// loadFromLocal/loadFromCloud completes.
+window.NodesCanvas.Registry.syncBuiltInFolders();
+
 // Auto-load logic depending on mode
 document.addEventListener("DOMContentLoaded", () => {
-    if (localStorage.getItem('nc_standalone_mode') === 'true') {
+    const SK = window.NodesCanvas.StorageKeys;
+    if (localStorage.getItem(SK.STANDALONE_MODE) === 'true') {
         window.NodesCanvas.Registry.loadFromLocal();
     } else {
-        if (window.NodesCanvas.AuthManager && window.NodesCanvas.AuthManager.isLoggedIn()) {
-            window.NodesCanvas.Registry.loadFromXano();
-        } else {
-            window.NodesCanvas.Registry.syncBuiltInFolders();
+        const cloud = window.NodesCanvas.CloudManager || window.NodesCanvas.AuthManager;
+        if (cloud && cloud.isLoggedIn()) {
+            window.NodesCanvas.Registry.loadFromCloud();
         }
+        // else: already seeded above
     }
 });

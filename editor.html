@@ -7,20 +7,29 @@
     <title>Nodes Canvas Studio</title>
 
     <!-- CSS Dependencies -->
-    <link rel="stylesheet" href="./css/main.css?v=1.4">
-    <link rel="stylesheet" href="./css/canvas.css?v=1.4">
+    <link rel="stylesheet" href="./css/main.css?v=1.5">
+    <link rel="stylesheet" href="./css/canvas.css?v=1.5">
     <link rel="stylesheet" href="./css/node.css?v=1.5">
-    <link rel="stylesheet" href="./css/menu.css?v=1.4">
-    <link rel="stylesheet" href="./css/settings_menu.css?v=1.4">
-    <link rel="stylesheet" href="./css/sidebar.css?v=1.4">
-    <link rel="stylesheet" href="./css/popup.css?v=1.4">
-    <link rel="stylesheet" href="./css/code_inspector.css?v=1.4">
+    <link rel="stylesheet" href="./css/menu.css?v=1.5">
+    <link rel="stylesheet" href="./css/settings_menu.css?v=1.5">
+    <link rel="stylesheet" href="./css/sidebar.css?v=1.5">
+    <link rel="stylesheet" href="./css/popup.css?v=1.5">
+    <link rel="stylesheet" href="./css/code_inspector.css?v=1.5">
 </head>
 
 <body>
-    <!-- Cloud mode back button -->
-    <div id="cloud-bar" style="display:flex; position:fixed; top:14px; left:50%; transform:translateX(-50%); z-index:9999; background:rgba(10,10,20,0.85); border:1px solid rgba(59,130,246,0.3); border-radius:20px; padding:5px 8px 5px 12px; align-items:center; gap:10px; backdrop-filter:blur(12px);">
-        <a href="./dashboard_cloud.html" style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#60a5fa;text-decoration:none">
+    <!-- Top mode bars (app.js shows the one matching the active mode) -->
+    <div id="standalone-bar" class="mode-bar mode-bar-standalone" style="display:none; position:fixed; top:14px; left:50%; transform:translateX(-50%); z-index:9999; background:rgba(10,10,20,0.85); border:1px solid rgba(0,122,255,0.3); border-radius:20px; padding:5px 8px 5px 12px; align-items:center; gap:10px; backdrop-filter:blur(12px);">
+        <a href="./dashboard.html" style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#60a5fa;text-decoration:none">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+            Dashboard
+        </a>
+        <span style="color:rgba(255,255,255,0.2)">|</span>
+        <span id="standalone-board-name" style="font-size:12px;color:rgba(255,255,255,0.45);padding-right:8px;"></span>
+    </div>
+
+    <div id="cloud-bar" class="mode-bar mode-bar-cloud" style="display:none; position:fixed; top:14px; left:50%; transform:translateX(-50%); z-index:9999; background:rgba(10,10,20,0.85); border:1px solid rgba(59,130,246,0.3); border-radius:20px; padding:5px 8px 5px 12px; align-items:center; gap:10px; backdrop-filter:blur(12px);">
+        <a href="./dashboard.html" style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#60a5fa;text-decoration:none">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
             Cloud Dashboard
         </a>
@@ -31,7 +40,6 @@
     <!-- Main Canvas Area -->
     <div id="canvas-container" class="canvas-container">
         <div id="canvas-layer" class="canvas-layer">
-            <!-- Nodes and Connections will be injected here -->
             <svg id="connections-layer" class="connections-layer"></svg>
         </div>
     </div>
@@ -41,17 +49,16 @@
         <button id="btn-settings" class="settings-btn glass-panel" title="Settings">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="3" />
-                <path
-                    d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l-.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
+                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l-.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
             </svg>
         </button>
         <div id="settings-dropdown" class="settings-dropdown glass-panel hidden">
-            <!-- User Profile Info -->
+            <!-- User Profile Info (cloud mode only) -->
             <div id="user-info-display" class="dropdown-user-info" style="display: none;"></div>
 
-            <div class="settings-item" id="btn-login">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    style="margin-right:8px;">
+            <!-- Login item — hidden in standalone mode by app.js -->
+            <div class="settings-item mode-cloud-only" id="btn-login">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;">
                     <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
                     <polyline points="10 17 15 12 10 7" />
                     <line x1="15" y1="12" x2="3" y2="12" />
@@ -72,18 +79,15 @@
             <div id="board-persistence-actions" style="display: none;">
                 <div class="settings-divider"></div>
                 <div class="settings-item" id="btn-logout" style="display: none;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        style="margin-right:8px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                         <polyline points="16 17 21 12 16 7" />
-                    </svg>
-                    <line x1="21" y1="12" x2="9" y2="12" />
+                        <line x1="21" y1="12" x2="9" y2="12" />
                     </svg>
                     <span>Logout</span>
                 </div>
                 <div class="settings-item" id="btn-save-board">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        style="margin-right:8px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;">
                         <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
                         <polyline points="17 21 17 13 7 13 7 21" />
                         <polyline points="7 3 7 8 15 8" />
@@ -91,8 +95,7 @@
                     <span>Save Board</span>
                 </div>
                 <div class="settings-item" id="btn-my-boards">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        style="margin-right:8px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;">
                         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2zM19 12H5" />
                     </svg>
                     <span>My Boards</span>
@@ -106,8 +109,7 @@
             </div>
             <div class="settings-divider"></div>
             <div class="settings-item settings-item-danger" id="btn-clear-cache">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    style="margin-right:8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;">
                     <polyline points="3 6 5 6 21 6" />
                     <path d="M19 6l-1 14H6L5 6" />
                     <path d="M10 11v6" />
@@ -118,8 +120,7 @@
             </div>
             <div class="settings-divider"></div>
             <div class="settings-item" id="btn-export-js">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    style="margin-right:8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                     <polyline points="7 10 12 15 17 10" />
                     <line x1="12" y1="15" x2="12" y2="3" />
@@ -133,8 +134,7 @@
     <div id="code-inspector" class="code-inspector ci-hidden">
         <div class="ci-header">
             <span class="ci-title">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    style="margin-right:6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;">
                     <polyline points="16 18 22 12 16 6" />
                     <polyline points="8 6 2 12 8 18" />
                 </svg>
@@ -176,9 +176,7 @@
                 <input type="text" id="sidebar-search" placeholder="Search nodes..." autocomplete="off">
                 <div class="sidebar-search-separator"></div>
             </div>
-            <div id="treeview-container" class="treeview">
-                <!-- Folders and Node Types will be injected here -->
-            </div>
+            <div id="treeview-container" class="treeview"></div>
         </div>
     </div>
 
@@ -198,7 +196,6 @@
             </svg>
         </button>
         <div class="menu-separator"></div>
-        <!-- Run Mode -->
         <button id="btn-run" class="menu-btn menu-btn-run" title="Run Mode — executes continuously like Grasshopper">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none">
                 <polygon points="5,3 19,12 5,21" />
@@ -212,7 +209,6 @@
     <!-- Monaco Editor via CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
     <script>
-        // Configure the Monaco AMD path so it can load its own workers
         require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
         window.monacoReady = new Promise(resolve => {
             require(['vs/editor/editor.main'], () => resolve(window.monaco));
@@ -220,14 +216,15 @@
     </script>
 
     <!-- JS Dependencies (Loaded in order for Global Namespace Architecture) -->
+    <script src="./js/core/StorageKeys.js?v=1.5"></script>
     <script src="./js/utils/utils.js?v=1.5"></script>
     <script src="./js/storage/WorkspaceManager.js"></script>
-    <script src="./js/nodes/NodeRegistry.js?v=1.4"></script>
-    <script src="./js/nodes/BaseNode.js?v=1.4"></script>
-    <script src="./js/nodes/NodeIcons.js?v=1.4"></script>
-    <script src="./js/nodes/NodeFactory.js?v=1.4"></script>
-    <script src="./js/core/Canvas.js?v=1.4"></script>
-    <script src="./js/nodes/Node.js?v=1.4"></script>
+    <script src="./js/nodes/NodeRegistry.js?v=1.5"></script>
+    <script src="./js/nodes/BaseNode.js?v=1.5"></script>
+    <script src="./js/nodes/NodeIcons.js?v=1.5"></script>
+    <script src="./js/nodes/NodeFactory.js?v=1.5"></script>
+    <script src="./js/core/Canvas.js?v=1.5"></script>
+    <script src="./js/nodes/Node.js?v=1.5"></script>
     <!-- Data Nodes -->
     <script src="./js/nodes/data/ManualDataNode.js?v=1.5"></script>
     <script src="./js/nodes/data/CallDataNode.js?v=1.5"></script>
@@ -241,22 +238,36 @@
     <script src="./js/nodes/logic/BranchNode.js?v=1.5"></script>
     <!-- UI Components -->
     <script src="./js/nodes/ui-components/ViewerNode.js?v=1.5"></script>
-    <script src="./js/core/Connection.js?v=1.4"></script>
-    <script src="./js/core/AuthManager.js?v=1.4"></script>
-    <script src="./js/core/Registry.js?v=1.4"></script>
-    <script src="./js/core/CanvasState.js?v=1.4"></script>
+    <script src="./js/core/Connection.js?v=1.5"></script>
+    <!-- Cloud backend architecture (pluggable: xano | rest | custom). Inert in standalone mode. -->
+    <script src="./js/core/cloud/ICloudBackend.js?v=1.5"></script>
+    <script src="./js/core/cloud/XanoBackend.js?v=1.5"></script>
+    <script src="./js/core/cloud/RestBackend.js?v=1.5"></script>
+    <script src="./js/core/cloud/backendPresets.js?v=1.5"></script>
+    <script src="./js/core/cloud/CloudManager.js?v=1.5"></script>
+    <script src="./js/config/defaultNodes.js?v=1.5"></script>
+    <script src="./js/core/Registry.js?v=1.5"></script>
+    <script src="./js/core/CanvasState.js?v=1.5"></script>
     <script src="./js/nodes/ui-components/NodeWidgets.js?v=1.5"></script>
-    <script src="./js/core/LibrariesManager.js?v=1.4"></script>
-    <script src="./js/core/GraphEngine.js?v=1.4"></script>
-    <script src="./js/ui/PopupManager.js?v=1.4"></script>
-    <script src="./js/ui/BottomMenu.js?v=1.4"></script>
-    <script src="./js/ui/ContextMenu.js?v=1.4"></script>
-    <script src="./js/ui/Settings.js?v=1.4"></script>
-    <script src="./js/ui/Sidebar.js?v=1.4"></script>
-    <script src="./js/ui/SidebarContextMenu.js?v=1.4"></script>
-    <script src="./js/ui/LibrariesPanel.js?v=1.4"></script>
-    <script src="./js/ui/CodeInspector.js?v=1.4"></script>
-    <script src="./js/app.js?v=1.4"></script>
+    <script src="./js/core/LibrariesManager.js?v=1.5"></script>
+    <script src="./js/core/GraphEngine.js?v=1.5"></script>
+    <!-- Popup modules -->
+    <script src="./js/ui/popups/BasePopup.js?v=1.5"></script>
+    <script src="./js/ui/popups/SearchPopup.js?v=1.5"></script>
+    <script src="./js/ui/popups/NodeFormPopup.js?v=1.5"></script>
+    <script src="./js/ui/popups/SliderFormPopup.js?v=1.5"></script>
+    <script src="./js/ui/popups/AuthPopup.js?v=1.5"></script>
+    <script src="./js/ui/popups/BoardsPopup.js?v=1.5"></script>
+    <script src="./js/ui/popups/CommonPopup.js?v=1.5"></script>
+    <script src="./js/ui/PopupManager.js?v=1.5"></script>
+    <script src="./js/ui/BottomMenu.js?v=1.5"></script>
+    <script src="./js/ui/ContextMenu.js?v=1.5"></script>
+    <script src="./js/ui/Settings.js?v=1.5"></script>
+    <script src="./js/ui/Sidebar.js?v=1.5"></script>
+    <script src="./js/ui/SidebarContextMenu.js?v=1.5"></script>
+    <script src="./js/ui/LibrariesPanel.js?v=1.5"></script>
+    <script src="./js/ui/CodeInspector.js?v=1.5"></script>
+    <script src="./js/app.js?v=1.5"></script>
 </body>
 
 </html>
