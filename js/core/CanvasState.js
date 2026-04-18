@@ -243,9 +243,15 @@ window.NodesCanvas.CanvasState = {
                     child.remove();
                 }
             });
-            // Also clear the SVG content
+            // Also clear the SVG content, but preserve temp-path
             const svg = document.getElementById('connections-layer');
-            if (svg) svg.innerHTML = '';
+            if (svg) {
+                Array.from(svg.children).forEach(child => {
+                    if (!child.classList.contains('temp-path')) {
+                        child.remove();
+                    }
+                });
+            }
         }
 
         // 3. Restore Transform

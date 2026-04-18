@@ -295,9 +295,25 @@ window.NodesCanvas.WorkspaceManager = class {
     async injectLib(filename) {
         const code = await this.loadLib(filename);
         if (!code) return false;
+        
         const script = document.createElement('script');
-        script.textContent = code;
+        
+        // Comprobar heurísticamente si es un módulo (tiene imports/exports al nivel superior)
+        const isModule = /(?:^|[\r\n;])\s*(?:import\s+.*?\s+from\s+['"]|export\s+(?:const|let|var|function|class|default|\{))/.test(code);
+        
+        let finalCode = code;
+        if (isModule) {
+            script.type = 'module';
+            // Reescribir importaciones desnudas (bare modules) a esm.sh para poder ejecutarlos nativamente sin bundler
+            // Ej: import { X } from "three" -> from "https://esm.sh/three"
+            finalCode = finalCode.replace(/(\bimport\s+[\s\S]*?from\s+['"])([^'".\/\\][^'"]+?)(['"])/g, '$1https://esm.sh/$2$3');
+            finalCode = finalCode.replace(/(\bimport\s+['"])([^'".\/\\][^'"]+?)(['"])/g, '$1https://esm.sh/$2$3');
+            finalCode = finalCode.replace(/(\bexport\s+[\s\S]*?from\s+['"])([^'".\/\\][^'"]+?)(['"])/g, '$1https://esm.sh/$2$3');
+        }
+        
+        script.textContent = finalCode;
         document.head.appendChild(script);
+        
         return true;
     }
 

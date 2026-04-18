@@ -7,14 +7,14 @@ window.NodesCanvas.ValueListNode = class extends window.NodesCanvas.BaseNode {
         this.title = config.title || 'Value List';
         
         // Settings for manual options: [{label: 'A', value: '1'}, ...]
-        this.manualOptions = config.settings?.options || [
+        this.manualOptions = config.manualOptions || config.settings?.options || [
             { label: 'Option A', value: '1' },
             { label: 'Option B', value: '2' }
         ];
         
         // Runtime options (extracted from input or manual)
         this.currentOptions = [];
-        this.selectedIndex = config.settings?.selectedIndex || 0;
+        this.selectedIndex = config.selectedIndex !== undefined ? config.selectedIndex : (config.settings?.selectedIndex || 0);
         this.value = config.value; // currently selected value
 
         this.initElement('node value-list-node');
