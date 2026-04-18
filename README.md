@@ -1,39 +1,28 @@
 # Nodes Canvas Studio
 
-A visual node-based programming environment inspired by Rhino's Grasshopper and visual flow editors. Build logic graphically, manipulate data, and export clean JavaScript code.
+![Canvas Preview](./docs/captura%20canvas.JPG)
 
-## 🚀 Features
+Entorno de programación visual basado en nodos. Construye lógica gráficamente, manipula datos y genera código JavaScript limpio.
 
-- **Visual Canvas**: Drag, drop, and connect nodes in a responsive, zoomed environment.
-- **Manual Data Nodes**: Create constants or variables with live type detection (Boolean, Number, Text, Objects, Arrays).
-- **Functional Nodes**: Build your own library of reusable JavaScript functions.
-- **Continuous Execution**: "Run Mode" evaluates the graph in real-time as you modify values.
-- **Debug Mode**: Step through execution with breakpoints and visual feedback.
-- **Code Inspector**: Live preview and download of the generated JavaScript code.
-- **Persistence**: Your board is automatically saved to LocalStorage.
-- **Clipboard Support**: Copy and paste nodes (Ctrl+C / Ctrl+V) to build complex patterns quickly.
+## 🚀 Novedades de esta Rama (`LocalStorageMode`)
 
-## 🛠️ Technology Stack
+- **Local Workspace (File System)**: Guarda todos tus tableros, nodos creados y configuración directo en una carpeta en tu computadora (usando la API de *File System Access*).
+- **Gestor de Librerías Descentralizado**: Buscador NPM/CDN integrado. Encuentra, descarga e inyecta librerías localmente para desarrollo *offline*.
+- **Sin Backend Requerido**: El modo Independiente es 100% privacidad-first y todo se guarda en tu propia máquina.
 
-- **Vanilla JavaScript**: Core logic and DOM manipulation.
-- **SVG**: For high-performance connection rendering.
-- **Monaco Editor**: Integrated for code editing tasks.
-- **Lucide Icons**: Modern, consistent iconography.
-- **CSS3**: Custom glassmorphism-inspired UI.
+> [!NOTE]
+> **Modo Colaborativo en la Nube (Cloud):** Actualmente se encuentra **EN DESARROLLO**. Esta rama enfoca todos los esfuerzos en conseguir un entorno Standalone estable y persistente localmente.
 
-## 📂 Project Structure
+## 🛠️ Características Principales
 
-- `/js/core`: Functional logic (Engine, Nodes, Connections, Persistence).
-- `/js/ui`: UI components (Sidebar, Menus, Popups, Inspector).
-- `/css`: Styling layers.
-- `index.html`: Main entry point.
+- **Tableros Visuales**: Sistema *drag & drop* de nodos para generar grafos de lógica.
+- **Ejecución Continua o Debug**: Modo "Run" para correr el grafo según modificas inputs, o paso-por-paso mediante Breakpoints.
+- **Data Nativa**: Nodos rápidos de variables, textos, números y lectura estructurada tipo Arrays y Objetos.
+- **Code Inspector**: Observa el output y las transformaciones a Vanilla JS en tiempo real.
 
-## 🚀 Getting Started
+## 📂 Cómo Iniciar
 
-1. Clone this repository.
-2. Open `index.html` in any modern browser.
-3. Start dragging nodes from the sidebar onto the canvas!
-
----
-
-Developed with ❤️ as a visual coding experiment.
+1. Clona el repositorio.
+2. Abre `index.html` en Chrome, Edge u otro navegador que soporte *File System API*.
+3. Selecciona el **Modo Independiente**.
+4. ¡Elige una carpeta vacía de tu PC para que sirva de *Workspace* y empieza a programar!
