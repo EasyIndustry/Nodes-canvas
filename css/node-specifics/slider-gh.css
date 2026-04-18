@@ -1,0 +1,132 @@
+/* slider-gh.css — Grasshopper-style horizontal slider layout
+   Unique geometry: [name|track|port] in a single 34px strip.
+   This is the ONLY node that deviates completely from the standard shell+header pattern. */
+
+.slider-node {
+    --node-accent: var(--accent-color);
+    border: none !important;
+    background: none !important;
+    box-shadow: none !important;
+    min-width: 200px !important;
+    max-width: 400px !important;
+    border-radius: 8px !important;
+}
+
+.slider-gh-container {
+    display: flex;
+    align-items: stretch;
+    height: 34px;
+    background: var(--node-bg);
+    border: 1px solid var(--node-border);
+    border-radius: 8px;
+    position: relative;
+    box-shadow: var(--shadow-sm);
+    overflow: visible;
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.node.selected .slider-gh-container {
+    border-color: var(--node-accent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--node-accent) 30%, transparent), var(--shadow-md);
+}
+
+/* Name section (left) */
+.slider-gh-name-section {
+    background: rgba(255, 255, 255, 0.05);
+    border-right: 1px solid var(--node-border);
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    cursor: grab !important;
+    border-radius: 7px 0 0 7px;
+    min-width: 90px;
+    user-select: none;
+}
+
+.slider-gh-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #fff;
+    opacity: 0.7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Track section (center) */
+.slider-gh-track-section {
+    flex-grow: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    min-width: 110px;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.slider-gh-range {
+    width: 100%;
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--node-accent);
+    height: 100%;
+    opacity: 0.3;
+    transition: opacity 0.2s;
+    background: transparent;
+    border: none;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.slider-gh-range:hover {
+    opacity: 0.5;
+}
+
+.slider-gh-value-display {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    font-family: 'Fira Code', monospace;
+    font-size: 11px;
+    color: #fff;
+    font-weight: 700;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* Inline value editor */
+.slider-gh-value-input {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    background: var(--node-header);
+    border: 1px solid var(--node-accent);
+    color: #fff;
+    font-family: 'Fira Code', monospace;
+    font-size: 11px;
+    text-align: center;
+    border-radius: 4px;
+    padding: 2px;
+    outline: none;
+    z-index: 10;
+}
+
+/* Port section (right) */
+.slider-gh-port-section {
+    width: 16px;
+    position: relative;
+    flex-shrink: 0;
+    z-index: 5;
+}
+
+.gh-socket {
+    right: -7px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    margin: 0 !important;
+}

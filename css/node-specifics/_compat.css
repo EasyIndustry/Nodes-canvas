@@ -1,0 +1,165 @@
+/* _compat.css — Backward compatibility aliases
+   Maps old CSS class names (used by current JS) to the new primitive styles.
+   REMOVE this file once JS nodes are migrated to use primitive class names. */
+
+/* === Toggle compat (DataHolderNode.js uses dh-track/dh-knob) === */
+.dh-toggle-wrap { display: flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
+.dh-toggle-label { font-size: 10px; color: #888; }
+.dh-track { width: 28px; height: 15px; border-radius: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); position: relative; transition: background 0.2s, border-color 0.2s; flex-shrink: 0; }
+.dh-track.on { background: rgba(99, 179, 237, 0.35); border-color: rgba(99, 179, 237, 0.6); }
+.dh-knob { width: 9px; height: 9px; border-radius: 50%; background: #888; position: absolute; top: 2px; left: 2px; transition: transform 0.2s, background 0.2s; }
+.dh-track.on .dh-knob { transform: translateX(13px); background: #63b3ed; }
+
+/* NodeWidgets.js uses nw-track/nw-knob */
+.node-widget-toggle { display: flex; align-items: center; gap: 7px; cursor: pointer; user-select: none; }
+.nw-toggle-label { font-size: 11px; color: #aaa; }
+.nw-track { width: 32px; height: 17px; border-radius: 9px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.15); position: relative; transition: background 0.2s, border-color 0.2s; flex-shrink: 0; }
+.nw-track.on { background: rgba(0, 220, 130, 0.3); border-color: rgba(0, 220, 130, 0.6); }
+.nw-knob { width: 11px; height: 11px; border-radius: 50%; background: #aaa; position: absolute; top: 2px; left: 2px; transition: transform 0.2s, background 0.2s; }
+.nw-track.on .nw-knob { transform: translateX(15px); background: #00dc82; }
+
+/* HttpRequestNode.js uses http-auto-toggle */
+.http-auto-toggle { font-size: 9px; font-weight: 900; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px; }
+.http-auto-toggle.active { background: rgba(0,220,130,0.2); border-color: rgba(0,220,130,0.4); color: #00dc82; }
+.http-manual-run { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); color: #fff; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+.http-manual-run:hover { background: var(--accent-color); transform: rotate(30deg); }
+
+/* === Button compat (DataHolderNode.js uses dh-update-btn) === */
+.dh-update-btn { background: rgba(99,179,237,0.12); border: 1px solid rgba(99,179,237,0.3); color: #63b3ed; border-radius: 5px; padding: 2px 7px; font-size: 10px; font-weight: 600; font-family: inherit; cursor: pointer; transition: background 0.15s, transform 0.1s; white-space: nowrap; }
+.dh-update-btn:hover { background: rgba(99,179,237,0.25); }
+.dh-update-btn:active { transform: scale(0.95); }
+.dh-update-btn:disabled { opacity: 0.4; cursor: default; }
+
+/* NodeWidgets.js uses node-widget-btn */
+.node-widget-btn { background: rgba(0,220,130,0.1); border: 1px solid rgba(0,220,130,0.35); color: #00dc82; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 600; font-family: inherit; cursor: pointer; letter-spacing: 0.3px; transition: background 0.15s, border-color 0.15s, transform 0.1s; user-select: none; }
+.node-widget-btn:hover { background: rgba(0,220,130,0.2); border-color: #00dc82; }
+.node-widget-btn:active { transform: scale(0.96); background: rgba(0,220,130,0.3); }
+
+/* === Panel header compat (ManualDataNode uses panel-header, panel-header-actions) === */
+.panel-header {
+    height: 32px;
+    padding: 0 8px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: var(--node-header);
+    border-bottom: 2px solid var(--accent-color);
+    border-top-left-radius: 11px;
+    border-top-right-radius: 11px;
+    cursor: grab;
+}
+.panel-header:active { cursor: grabbing; }
+.panel-header.constant { border-bottom-color: #ffd700; }
+.panel-header-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.panel-controls { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
+.panel-edit-name-btn { background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; padding: 2px 4px; border-radius: 3px; display: flex; align-items: center; }
+.panel-edit-name-btn:hover { color: #fff; }
+
+/* ManualDataNode uses panel-textarea */
+.panel-textarea { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: var(--node-text); border-radius: 6px; padding: 6px 8px; font-family: 'Fira Code','Cascadia Code',monospace; font-size: 13px; resize: vertical; outline: none; min-height: 36px; line-height: 1.5; transition: border-color 0.2s; user-select: text; cursor: text; }
+.panel-textarea:focus { border-color: var(--accent-color); }
+
+/* ManualDataNode uses panel-array-btn, panel-const-toggle */
+.panel-array-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #ccc; border-radius: 4px; cursor: pointer; padding: 3px 5px; display: flex; align-items: center; transition: all 0.2s; }
+.panel-array-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+.panel-array-btn.active { background: var(--accent-color); border-color: var(--accent-color); color: #fff; }
+.panel-const-toggle { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #ffd700; font-size: 9px; font-weight: 800; padding: 2px 5px; border-radius: 4px; cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px; }
+.panel-const-toggle:hover { background: rgba(255,255,255,0.15); }
+
+/* === Badge compat (ManualDataNode uses panel-type-badge) === */
+.panel-type-badge { font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 10px; align-self: flex-start; opacity: 0.85; }
+.panel-type-text { background: rgba(200,200,200,0.15); color: #ccc; }
+.panel-type-number { background: rgba(0,220,130,0.2); color: #00dc82; }
+.panel-type-boolean { background: rgba(255,165,0,0.2); color: #ffa500; }
+.panel-type-array { background: rgba(130,80,255,0.2); color: #9b5ff0; }
+.panel-type-object { background: rgba(255,71,87,0.2); color: #ff4757; }
+
+/* === Display compat (ViewerNode uses viewer-*, DataHolder uses dh-display) === */
+.viewer-header { background: rgba(59,130,246,0.12); border-bottom: 1px solid rgba(59,130,246,0.2); padding: 0 12px; height: 34px; color: #3b82f6; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; display: flex; align-items: center; gap: 8px; cursor: move; border-radius: 11px 11px 0 0; }
+.viewer-main { display: flex; flex-grow: 1; position: relative; padding: 0; background: transparent; }
+.viewer-port-side { width: 28px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(255,255,255,0.02); border-right: 1px solid rgba(255,255,255,0.05); }
+.viewer-body { flex-grow: 1; padding: 10px 12px; background: rgba(0,0,0,0.2); min-height: 48px; max-height: 240px; overflow: auto; }
+.viewer-display { font-family: 'Fira Code', monospace; font-size: 11px; color: #00dc82; white-space: pre-wrap; word-break: break-all; line-height: 1.4; }
+.viewer-placeholder { color: rgba(255,255,255,0.2); font-style: italic; font-size: 10px; }
+
+/* DataHolder specific layout compat */
+.dh-header { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: rgba(99,179,237,0.1); border-bottom: 1px solid rgba(99,179,237,0.2); border-radius: 11px 11px 0 0; cursor: grab; gap: 8px; }
+.dh-header:active { cursor: grabbing; }
+.dh-header-left { display: flex; align-items: center; gap: 6px; color: #63b3ed; min-width: 0; }
+.dh-title { font-size: 12px; font-weight: 600; color: #63b3ed; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dh-controls { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.dh-body { flex: 1; padding: 10px 10px 10px 14px; min-height: 48px; overflow: hidden; }
+.dh-display { margin: 0; font-family: 'Fira Code','Cascadia Code',monospace; font-size: 11px; color: #e2e8f0; white-space: pre-wrap; word-break: break-all; max-height: 180px; overflow-y: auto; line-height: 1.5; }
+.dh-display.dh-empty { color: #555; font-style: italic; }
+.dh-port-side { display: flex; align-items: center; padding: 10px 0; position: relative; width: 0; }
+.dh-port-side .socket { position: absolute; left: -7px; top: 50%; transform: translateY(-50%); }
+.dh-port-out-side { display: flex; align-items: center; padding: 10px 0; position: relative; width: 0; }
+.dh-port-out-side .socket { position: absolute; right: -7px; top: 50%; transform: translateY(-50%); }
+
+/* Status bar compat */
+.dh-status-bar { display: flex; align-items: center; gap: 5px; padding: 3px 10px; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.1); border-radius: 0 0 11px 11px; }
+.dh-status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; transition: background 0.3s; }
+.dh-status-dot.live { background: #63b3ed; box-shadow: 0 0 5px rgba(99,179,237,0.6); animation: n-pulse 2s infinite; }
+.dh-status-dot.frozen { background: #555; }
+.dh-status-text { font-size: 10px; color: #666; }
+
+/* === Dropdown compat (ValueListNode uses valuelist-select) === */
+.valuelist-select { width: 100%; background: #121212; border: 1px solid var(--glass-border); color: #ffffff; padding: 6px 10px; padding-right: 24px; border-radius: 6px; font-size: 12px; outline: none; cursor: pointer; transition: all 0.2s; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+.valuelist-select:focus, .valuelist-select:hover { border-color: var(--accent-color); background-color: #1a1a1a; }
+.valuelist-select option { background: #121212; color: #fff; padding: 8px; }
+.valuelist-select:disabled { opacity: 0.6; cursor: not-allowed; background: rgba(255,255,255,0.02); }
+.valuelist-container.mode-input .valuelist-select { border-style: dashed; border-color: rgba(255,215,0,0.5); }
+
+/* CallDataNode uses call-select */
+.call-select { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--node-text); padding: 6px; border-radius: 6px; font-size: 12px; outline: none; cursor: pointer; }
+.call-select optgroup { background: #1e1e2d; color: #888; font-size: 10px; }
+.call-select option { background: #1e1e2d; color: #eee; }
+
+/* === Run mode button glow === */
+i.menu-btn-run.active { background-color: #00dc82 !important; color: #000 !important; box-shadow: 0 0 15px rgba(0,220,130,0.4); transform: scale(1.05); }
+
+/* === Light theme compat === */
+body.light-theme .nw-track { background: #ddd; border-color: #ccc; }
+body.light-theme .nw-knob { background: #888; }
+body.light-theme .nw-toggle-label { color: #555; }
+body.light-theme .node-widget-btn { background: rgba(0,180,100,0.08); border-color: rgba(0,180,100,0.3); color: #007b45; }
+body.light-theme .node-widget-zone { border-top-color: rgba(0,0,0,0.08); }
+
+body.light-theme .viewer-node { background: #fff; border-color: #3b82f6; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+body.light-theme .viewer-header { background: #f0f7ff; color: #2563eb; border-bottom-color: #dbeafe; }
+body.light-theme .viewer-body { background: #f8fafc; }
+body.light-theme .viewer-display { color: #059669; }
+body.light-theme .viewer-placeholder { color: #94a3b8; }
+body.light-theme .viewer-port-side { background: #f8fafc; border-right-color: #e2e8f0; }
+
+body.light-theme .data-holder-node { border-color: rgba(59,130,246,0.4); }
+body.light-theme .dh-header { background: rgba(59,130,246,0.07); border-bottom-color: rgba(59,130,246,0.15); }
+body.light-theme .dh-title, body.light-theme .dh-header-left { color: #2563eb; }
+body.light-theme .dh-display { color: #1a202c; }
+body.light-theme .dh-display.dh-empty { color: #aaa; }
+body.light-theme .dh-status-bar { background: rgba(0,0,0,0.03); border-top-color: rgba(0,0,0,0.06); }
+
+body.light-theme .panel-label-display, body.light-theme .panel-label-input, body.light-theme .panel-textarea { color: #222 !important; }
+body.light-theme .panel-textarea { background: #fff; border-color: #ccc; }
+body.light-theme .panel-header-actions button { color: #444; }
+body.light-theme .panel-header-actions button:hover { color: #000; }
+body.light-theme .panel-type-text { background: rgba(0,0,0,0.05); color: #666; }
+body.light-theme .panel-type-number { background: rgba(0,180,100,0.1); color: #008f5d; }
+body.light-theme .panel-type-boolean { background: rgba(255,140,0,0.1); color: #d47a00; }
+body.light-theme .panel-type-array { background: rgba(130,80,255,0.1); color: #7236d3; }
+body.light-theme .panel-type-object { background: rgba(255,71,87,0.1); color: #d63031; }
+
+body.light-theme .valuelist-select { background: #fff; border-color: #ccc; color: #333; }
+body.light-theme .valuelist-select:disabled { background: #f0f0f0; }
+
+body.light-theme .call-header { background: rgba(0,122,255,0.08); border-bottom-color: rgba(0,122,255,0.1); }
+body.light-theme .call-title, body.light-theme .call-icon { color: #007aff; }
+body.light-theme .call-select, body.light-theme .call-select optgroup, body.light-theme .call-select option { background: #fff; color: #333; }
+
+body.light-theme .slider-gh-container { background: #fff; border-color: #ced4da; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+body.light-theme .slider-gh-name-section { background: #f8f9fa; border-right-color: #dee2e6; }
+body.light-theme .slider-gh-label { color: #495057; opacity: 1; }
+body.light-theme .slider-gh-track-section { background: #f1f3f5; }
+body.light-theme .slider-gh-value-display { color: #212529; text-shadow: none; }
+body.light-theme .slider-gh-value-input { background: #fff; color: #000; }
+body.light-theme .gh-socket { border-color: #adb5bd; background: #fff; }

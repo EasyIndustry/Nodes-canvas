@@ -9,7 +9,7 @@
     <!-- CSS Dependencies -->
     <link rel="stylesheet" href="./css/main.css?v=1.4">
     <link rel="stylesheet" href="./css/canvas.css?v=1.4">
-    <link rel="stylesheet" href="./css/node.css?v=1.4">
+    <link rel="stylesheet" href="./css/node.css?v=1.5">
     <link rel="stylesheet" href="./css/menu.css?v=1.4">
     <link rel="stylesheet" href="./css/settings_menu.css?v=1.4">
     <link rel="stylesheet" href="./css/sidebar.css?v=1.4">
@@ -211,21 +211,31 @@
 
     <!-- JS Dependencies (Loaded in order for Global Namespace Architecture) -->
     <script src="./js/utils/utils.js?v=1.4"></script>
-    <script src="./js/core/NodeRegistry.js?v=1.4"></script>
-    <script src="./js/core/BaseNode.js?v=1.4"></script>
-    <script src="./js/core/NodeIcons.js?v=1.4"></script>
-    <script src="./js/core/NodeFactory.js?v=1.4"></script>
+    <script src="./js/nodes/NodeRegistry.js?v=1.4"></script>
+    <script src="./js/nodes/BaseNode.js?v=1.4"></script>
+    <script src="./js/nodes/NodeIcons.js?v=1.4"></script>
+    <script src="./js/nodes/NodeFactory.js?v=1.4"></script>
     <script src="./js/core/Canvas.js?v=1.4"></script>
-    <script src="./js/core/Node.js?v=1.4"></script>
-    <script src="./js/core/ManualDataNode.js?v=1.4"></script>
-    <script src="./js/core/CallDataNode.js?v=1.4"></script>
-    <script src="./js/core/SliderNode.js?v=1.4"></script>
-    <script src="./js/core/ExpressionNode.js?v=1.4"></script>
-    <script src="./js/core/ViewerNode.js?v=1.4"></script>
+    <script src="./js/nodes/Node.js?v=1.4"></script>
+    <!-- Data Nodes -->
+    <script src="./js/nodes/data/ManualDataNode.js?v=1.5"></script>
+    <script src="./js/nodes/data/CallDataNode.js?v=1.5"></script>
+    <script src="./js/nodes/data/SliderNode.js?v=1.5"></script>
+    <script src="./js/nodes/data/ValueListNode.js?v=1.5"></script>
+    <script src="./js/nodes/data/DataHolderNode.js?v=1.5"></script>
+    <!-- Web Nodes -->
+    <script src="./js/nodes/web/HttpRequestNode.js?v=1.5"></script>
+    <!-- Logic Nodes -->
+    <script src="./js/nodes/logic/ExpressionNode.js?v=1.5"></script>
+    <script src="./js/nodes/logic/BranchNode.js?v=1.5"></script>
+    <!-- UI Components -->
+    <script src="./js/nodes/ui-components/ViewerNode.js?v=1.5"></script>
     <script src="./js/core/Connection.js?v=1.4"></script>
     <script src="./js/core/AuthManager.js?v=1.4"></script>
     <script src="./js/core/Registry.js?v=1.4"></script>
     <script src="./js/core/CanvasState.js?v=1.4"></script>
+    <script src="./js/nodes/ui-components/NodeWidgets.js?v=1.5"></script>
+    <script src="./js/core/LibrariesManager.js?v=1.4"></script>
     <script src="./js/core/GraphEngine.js?v=1.4"></script>
     <script src="./js/ui/PopupManager.js?v=1.4"></script>
     <script src="./js/ui/BottomMenu.js?v=1.4"></script>
@@ -233,6 +243,7 @@
     <script src="./js/ui/Settings.js?v=1.4"></script>
     <script src="./js/ui/Sidebar.js?v=1.4"></script>
     <script src="./js/ui/SidebarContextMenu.js?v=1.4"></script>
+    <script src="./js/ui/LibrariesPanel.js?v=1.4"></script>
     <script src="./js/ui/CodeInspector.js?v=1.4"></script>
     <script src="./js/app.js?v=1.4"></script>
 </body>

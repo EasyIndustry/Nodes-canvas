@@ -1,0 +1,90 @@
+/* toggle.css — Reusable toggle switch primitive
+   Replaces: .dh-track/.dh-knob, .nw-track/.nw-knob, .http-auto-toggle
+   Usage: <div class="n-toggle"><div class="n-toggle-track [on]"><div class="n-toggle-knob"></div></div></div> */
+
+.n-toggle {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.n-toggle-label {
+    font-size: 10px;
+    color: #888;
+}
+
+.n-toggle-track {
+    width: 28px;
+    height: 15px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    position: relative;
+    transition: background 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+}
+
+.n-toggle-track.on {
+    background: color-mix(in srgb, var(--node-accent, var(--accent-color)) 35%, transparent);
+    border-color: color-mix(in srgb, var(--node-accent, var(--accent-color)) 60%, transparent);
+}
+
+.n-toggle-knob {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #888;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.n-toggle-track.on .n-toggle-knob {
+    transform: translateX(13px);
+    background: var(--node-accent, var(--accent-color));
+}
+
+/* Larger variant for widget zone toggles */
+.n-toggle--lg .n-toggle-track {
+    width: 32px;
+    height: 17px;
+    border-radius: 9px;
+}
+
+.n-toggle--lg .n-toggle-knob {
+    width: 11px;
+    height: 11px;
+}
+
+.n-toggle--lg .n-toggle-track.on .n-toggle-knob {
+    transform: translateX(15px);
+}
+
+.n-toggle--lg .n-toggle-label {
+    font-size: 11px;
+    color: #aaa;
+}
+
+/* Text-badge toggle (for compact inline labels like "AUTO", "CONST") */
+.n-toggle-badge {
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+    user-select: none;
+}
+
+.n-toggle-badge.on {
+    background: color-mix(in srgb, var(--node-accent, #00dc82) 20%, transparent);
+    border-color: color-mix(in srgb, var(--node-accent, #00dc82) 40%, transparent);
+    color: var(--node-accent, #00dc82);
+}

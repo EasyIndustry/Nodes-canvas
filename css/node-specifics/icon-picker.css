@@ -1,0 +1,63 @@
+/* icon-picker.css — Icon selection grid used in Popup forms */
+
+.icon-picker-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+.icon-search-input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #fff;
+    font-size: 13px;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.icon-search-input:focus {
+    border-color: #3b82f6;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.icon-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(32px, 1fr));
+    gap: 6px;
+    max-height: 180px;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+}
+
+.icon-pick-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: #aaa;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.icon-pick-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.icon-pick-btn.selected {
+    background: #3b82f6;
+    color: #fff;
+    border-color: #60a5fa;
+}

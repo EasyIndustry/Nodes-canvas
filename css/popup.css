@@ -305,3 +305,70 @@ body.light-theme .form-zone {
     border-color: var(--accent-color);
     color: var(--accent-color);
 }
+
+/* --- Board List Items --- */
+.boards-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.board-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    border: 1px solid var(--glass-border);
+    background: rgba(255,255,255,0.03);
+    gap: 10px;
+}
+
+.board-list-item:hover {
+    background: rgba(255,255,255,0.07);
+    border-color: var(--accent-color);
+}
+
+.board-item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.board-item-title {
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.board-item-date {
+    font-size: 11px;
+    color: #888;
+    margin-top: 2px;
+}
+
+.board-delete-btn {
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    transition: color 0.15s, background 0.15s;
+    display: flex;
+    align-items: center;
+}
+
+.board-delete-btn:hover {
+    color: #ff4757;
+    background: rgba(255, 71, 87, 0.1);
+}
+
+.board-delete-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+}

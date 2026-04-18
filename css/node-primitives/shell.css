@@ -1,0 +1,43 @@
+/* shell.css — Node shell: container, selection, states
+   Every node type inherits this base. 
+   Override --node-accent on each node for color theming. */
+
+.node {
+    --node-accent: var(--accent-color);
+
+    position: absolute;
+    width: max-content;
+    min-width: 140px;
+    max-width: 340px;
+    min-height: unset;
+
+    background-color: var(--node-bg);
+    border: 1px solid var(--node-border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+
+    display: flex;
+    flex-direction: column;
+
+    user-select: none;
+    cursor: default;
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+/* --- States --- */
+.node.selected {
+    border-color: var(--node-accent) !important;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--node-accent) 40%, transparent),
+                var(--shadow-md) !important;
+    z-index: 1000;
+}
+
+.node.dragging {
+    opacity: 0.9;
+    box-shadow: var(--shadow-lg);
+}
+
+.node-error {
+    border-color: #ff4757 !important;
+    box-shadow: 0 0 0 2px rgba(255, 71, 87, 0.4) !important;
+}

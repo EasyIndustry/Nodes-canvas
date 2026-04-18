@@ -1,0 +1,40 @@
+/* status-bar.css — Bottom status bar with live/frozen indicator
+   Used by: Data Holder (and potentially future nodes). */
+
+.n-status-bar {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 0 0 11px 11px;
+}
+
+.n-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: background 0.3s;
+}
+
+.n-status-dot.live {
+    background: var(--node-accent, #63b3ed);
+    box-shadow: 0 0 5px color-mix(in srgb, var(--node-accent, #63b3ed) 60%, transparent);
+    animation: n-pulse 2s infinite;
+}
+
+.n-status-dot.frozen {
+    background: #555;
+}
+
+.n-status-text {
+    font-size: 10px;
+    color: #666;
+}
+
+@keyframes n-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}

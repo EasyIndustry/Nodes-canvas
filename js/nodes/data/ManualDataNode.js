@@ -19,16 +19,45 @@ window.NodesCanvas.ManualDataNode = class extends window.NodesCanvas.BaseNode {
         if (layer) layer.appendChild(this.element);
     }
 
-    /** Detects type of the raw string value */
+    /** Detects type of the raw string value including JSON support */
     detectType(raw) {
-        if (raw === '') return 'text';
-        if (raw === 'true' || raw === 'false') return 'boolean';
-        if (!isNaN(raw) && !isNaN(parseFloat(raw))) return 'number';
+        const trimmed = (raw || '').trim();
+        if (trimmed === '') return 'text';
+        
+        // Booleans
+        if (trimmed === 'true' || trimmed === 'false') return 'boolean';
+        
+        // Numbers
+        if (!isNaN(trimmed) && !isNaN(parseFloat(trimmed))) return 'number';
+        
+        // Objects & Arrays via JSON detection
+        if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+            try {
+                const parsed = JSON.parse(trimmed);
+                if (Array.isArray(parsed)) return 'array';
+                if (typeof parsed === 'object' && parsed !== null) return 'object';
+            } catch (e) {
+                // Fallback to text if JSON is malformed
+            }
+        }
+        
         return 'text';
+    }
+
+    getTypeLabel(type) {
+        const labels = {
+            'text': 'TEXT',
+            'object': 'OBJ',
+            'array': 'ARRAY',
+            'number': 'NUM',
+            'boolean': 'BOOL'
+        };
+        return labels[type] || type.toUpperCase();
     }
 
     render() {
         const type = this.arrayMode ? 'array' : this.detectType(this.value);
+        const labelText = this.getTypeLabel(type);
 
         this.element.innerHTML = `
             <div class="panel-header ${this.isConstant ? 'constant' : ''}">
@@ -44,7 +73,7 @@ window.NodesCanvas.ManualDataNode = class extends window.NodesCanvas.BaseNode {
                 </div>
             </div>
             <div class="panel-body">
-                <div class="panel-type-badge panel-type-${type}">${type}</div>
+                <div class="panel-type-badge panel-type-${type}">${labelText}</div>
                 <textarea class="panel-textarea" placeholder="Enter values...">${this.value}</textarea>
             </div>
             <div class="node-ports-out">
@@ -70,8 +99,10 @@ window.NodesCanvas.ManualDataNode = class extends window.NodesCanvas.BaseNode {
             this.value = e.target.value;
             const typeBadge = this.element.querySelector('.panel-type-badge');
             const type = this.arrayMode ? 'array' : this.detectType(this.value);
+            const labelText = this.getTypeLabel(type);
+            
             typeBadge.className = `panel-type-badge panel-type-${type}`;
-            typeBadge.textContent = type;
+            typeBadge.textContent = labelText;
 
             if (window.NodesCanvas.executionMode === 'run') {
                 window.NodesCanvas.GraphEngine.execute();

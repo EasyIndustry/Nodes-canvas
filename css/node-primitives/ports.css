@@ -1,0 +1,102 @@
+/* ports.css — Sockets, ports, and port-side strips
+   Shared across ALL node types. */
+
+/* --- Node Body (port container) --- */
+.node-body {
+    flex: 1;
+    padding: 10px 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    min-height: 32px;
+}
+
+.node-ports-in,
+.node-ports-out {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.node-ports-in  { align-items: flex-start; }
+.node-ports-out { align-items: flex-end; }
+
+/* --- Port (socket + label wrapper) --- */
+.port {
+    display: flex;
+    align-items: center;
+    height: 24px;
+    position: relative;
+}
+
+.port-label {
+    font-size: 12px;
+    color: #aaa;
+}
+
+.port.in .port-label  { margin-left: 12px; }
+.port.out .port-label { margin-right: 12px; }
+
+/* --- Socket (connection circle) --- */
+.socket {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-color: var(--socket-fill);
+    border: 2px solid var(--socket-border);
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: crosshair;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.socket:hover {
+    border-color: var(--node-accent, var(--accent-color));
+    background-color: #fff;
+    transform: translateY(-50%) scale(1.2);
+}
+
+.port.in .socket,
+.socket.in-socket  { left: -7px; }
+
+.port.out .socket,
+.socket.out-socket { right: -7px; }
+
+/* --- Port Side Strip (vertical socket column beside content) --- */
+.node-port-side {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    width: 0;
+    padding: 10px 0;
+}
+
+.node-port-side .socket {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.node-port-side--in .socket  { left: -7px; }
+.node-port-side--out .socket { right: -7px; }
+
+/* --- Value badge on output sockets --- */
+.socket-value-badge {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.75);
+    color: #00dc82;
+    font-family: 'Fira Code', monospace;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 220, 130, 0.3);
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 10;
+}

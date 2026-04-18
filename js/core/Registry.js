@@ -41,6 +41,37 @@ window.NodesCanvas.Registry = {
                     icon: 'eye',
                     isSpecial: true,
                     editable: false
+                },
+                {
+                    id: 'n_data_holder',
+                    type: 'data-holder',
+                    title: 'Data Holder',
+                    icon: 'archive',
+                    isSpecial: true,
+                    editable: false
+                },
+                {
+                    id: 'n_value_list',
+                    type: 'value-list',
+                    title: 'Value List',
+                    icon: 'list',
+                    isSpecial: true,
+                    editable: false
+                }
+            ],
+            subfolders: []
+        },
+        {
+            id: 'f_web',
+            name: 'Web',
+            editable: false,
+            nodes: [
+                {
+                    id: 'n_http_request',
+                    type: 'http-request',
+                    title: 'HTTP Request',
+                    icon: 'globe',
+                    editable: false
                 }
             ],
             subfolders: []
@@ -105,6 +136,17 @@ window.NodesCanvas.Registry = {
                     inputs: [{ id: 'x', label: 'x' }],
                     outputs: [{ id: 'Result', label: 'Result' }],
                     editable: true
+                },
+
+                {
+                    id: 'n_branch',
+                    type: 'branch',
+                    title: 'Branch / If',
+                    icon: 'git-branch',
+                    branches: [{ id: 'If_1', code: 'x > 5' }],
+                    inputs: [{ id: 'x', label: 'x' }],
+                    outputs: [{ id: 'If_1', label: 'If_1'}, { id: 'Else', label: 'Else'}],
+                    editable: true
                 }
             ],
             subfolders: []
@@ -160,6 +202,9 @@ window.NodesCanvas.Registry = {
         if (node) {
             Object.assign(node, newConfig);
 
+            // Ensure title is always in sync (name field used by Xano)
+            if (newConfig.title) node.title = newConfig.title;
+
             // Xano Sync
             const auth = window.NodesCanvas.AuthManager;
             if (auth && auth.isLoggedIn() && (typeof nodeId === 'number' || !nodeId.startsWith('n_'))) {
@@ -201,9 +246,9 @@ window.NodesCanvas.Registry = {
 
     // --- Folder/Node Management ---
 
-    async addFolder(name, parentId = null) {
+    async addFolder(name, parentId = null, category = 'Function') {
         const tempId = 'f_' + Date.now();
-        const newFolder = { id: tempId, name, nodes: [], subfolders: [], editable: true, type: 'Folder' };
+        const newFolder = { id: tempId, name, nodes: [], subfolders: [], editable: true, type: 'Folder', category };
         if (parentId) newFolder.parent_id = parentId;
 
         // Xano Sync
@@ -232,11 +277,13 @@ window.NodesCanvas.Registry = {
         const folder = this._findFolder(this.folders, id);
         if (folder && folder.editable !== false) {
             folder.name = newName;
+            folder.title = newName; // keep title in sync — saveCustomFeature prefers .title
+
             folder.type = 'Folder';
 
-            // Xano Sync
+            // Xano Sync — String() cast guards against numeric IDs from Xano
             const auth = window.NodesCanvas.AuthManager;
-            if (auth && auth.isLoggedIn() && (typeof id === 'number' || !id.startsWith('f_'))) {
+            if (auth && auth.isLoggedIn() && (typeof id === 'number' || !String(id).startsWith('f_'))) {
                 await auth.saveCustomFeature(folder);
             }
 
@@ -302,6 +349,7 @@ window.NodesCanvas.Registry = {
             const item = {
                 id: f.id,
                 name: f.name,
+                title: f.name,   // sidebar uses .title to display node names
                 editable: true,
                 type: f.type, // "Folder", "Function", "Class"
                 ...f.data // This contains 'icon', 'code', 'inputs', 'outputs', etc.
@@ -367,6 +415,16 @@ window.NodesCanvas.Registry = {
         ensureNode(dataFolder, { id: 'n_call_data', title: 'Call Data', icon: 'external-link', isSpecial: true });
         ensureNode(dataFolder, { id: 'n_slider', title: 'Number Slider', icon: 'sliders-horizontal', isSlider: true });
         ensureNode(dataFolder, { id: 'n_viewer', title: 'Viewer', icon: 'eye', isSpecial: true });
+        ensureNode(dataFolder, { id: 'n_data_holder', title: 'Data Holder', icon: 'archive', isSpecial: true, type: 'data-holder' });
+        ensureNode(dataFolder, { id: 'n_value_list', title: 'Value List', icon: 'list', isSpecial: true, type: 'value-list' });
+        
+        // 1.5 Ensure Web Folder
+        let webFolder = this._findFolder(this.folders, 'f_web');
+        if (!webFolder) {
+            webFolder = { id: 'f_web', name: 'Web', editable: false, nodes: [], subfolders: [] };
+            this.folders.splice(this.folders.indexOf(dataFolder) + 1, 0, webFolder);
+        }
+        ensureNode(webFolder, { id: 'n_http_request', title: 'HTTP Request', icon: 'globe', type: 'http-request' });
 
         // 2. Ensure Math Folder
         let mathFolder = this._findFolder(this.folders, 'f_math');
@@ -403,6 +461,10 @@ window.NodesCanvas.Registry = {
         ensureNode(utilsFolder, {
             id: 'n_expression', title: 'Expression', icon: 'variable', type: 'expression', inputs: [{ id: 'x', label: 'x' }], outputs: [{ id: 'Result', label: 'Result' }],
             code: 'x * 2'
+        });
+        ensureNode(utilsFolder, {
+            id: 'n_branch', title: 'Branch / If', icon: 'git-branch', type: 'branch', inputs: [{ id: 'x', label: 'x' }], outputs: [{ id: 'If_1', label: 'If_1'}, { id: 'Else', label: 'Else'}],
+            branches: [{ id: 'If_1', code: 'x > 5' }]
         });
 
         this._notify();

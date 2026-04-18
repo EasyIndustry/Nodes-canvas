@@ -130,19 +130,25 @@ window.NodesCanvas.AuthManager = {
                 ? `${this._baseUrl}/board_canvas_studio/${boardData.id}`
                 : `${this._baseUrl}/board_canvas_studio`;
 
+            const payload = {
+                user_canvas_studio_id: this._user.id,
+                title: boardData.title || 'Untitled Board',
+                description: boardData.description || '',
+                last_updated: Date.now(),
+                settings: boardData.settings || {}
+            };
+
+            if (isUpdate) {
+                payload.board_canvas_studio_id = boardData.id;
+            }
+
             const response = await fetch(url, {
                 method: isUpdate ? 'PATCH' : 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     ...this.getAuthHeader()
                 },
-                body: JSON.stringify({
-                    user_canvas_studio_id: this._user.id,
-                    title: boardData.title || 'Untitled Board',
-                    description: boardData.description || '',
-                    last_updated: Date.now(),
-                    settings: boardData.settings || {}
-                })
+                body: JSON.stringify(payload)
             });
 
             const result = await response.json();
@@ -194,7 +200,7 @@ window.NodesCanvas.AuthManager = {
     async saveCustomFeature(featureData) {
         if (!this._user) return { success: false, error: 'User not logged in' };
         try {
-            const isUpdate = !!featureData.id && (typeof featureData.id === 'number' || !featureData.id.toString().startsWith('f_') && !featureData.id.toString().startsWith('n_'));
+            const isUpdate = !!featureData.id && (typeof featureData.id === 'number' || (!String(featureData.id).startsWith('f_') && !String(featureData.id).startsWith('n_')));
 
             const url = isUpdate
                 ? `${this._baseUrl}/custom_user_features/${featureData.id}`
@@ -211,7 +217,7 @@ window.NodesCanvas.AuthManager = {
 
             const payload = {
                 user_canvas_studio_id: this._user.id,
-                name: featureData.name || featureData.title || 'Untitled',
+                name: featureData.title || featureData.name || 'Untitled',
                 description: featureData.description || '',
                 type: type,
                 data: {}
@@ -220,7 +226,7 @@ window.NodesCanvas.AuthManager = {
             // Everything else goes into 'data' JSON, including parent_id
             Object.keys(featureData).forEach(key => {
                 // Skip root fields we already handled or internal flags
-                if ([...rootFields, 'title', 'editable', 'builtIn', 'user_id', 'folder_id', 'parent_id'].includes(key)) {
+                if ([...rootFields, 'title', 'name', 'editable', 'builtIn', 'user_id', 'folder_id', 'parent_id'].includes(key)) {
                     return;
                 }
                 payload.data[key] = featureData[key];

@@ -5,12 +5,14 @@ window.NodesCanvas = window.NodesCanvas || {};
 
 window.NodesCanvas.CanvasState = {
     _saveTimeout: null,
+    _lastRemoteSave: 0,
+    _remoteSaveMinInterval: 15000, // 15s — Xano free tier: 10 req / 20s
     projectId: 'default_board',
 
-    /** Schedule a debounced save */
+    /** Schedule a debounced save (local only, fast) */
     scheduleSave() {
         if (this._saveTimeout) clearTimeout(this._saveTimeout);
-        this._saveTimeout = setTimeout(() => this.save(), 500);
+        this._saveTimeout = setTimeout(() => this.save(), 800);
     },
 
     /** Save current state to localStorage and optionally Cloud */
@@ -26,9 +28,23 @@ window.NodesCanvas.CanvasState = {
         // Local Storage
         localStorage.setItem(`nodes_canvas_${this.projectId}`, JSON.stringify(state));
 
-        // Cloud Storage (Auto-save if we have an active board ID)
+        // Cloud Storage — throttled to respect Xano free tier rate limits
         if (this.currentBoardId && window.NodesCanvas.AuthManager.isLoggedIn()) {
-            this.saveRemote(this.currentBoardTitle || 'Auto-saved Board');
+            const now = Date.now();
+            if (now - this._lastRemoteSave >= this._remoteSaveMinInterval) {
+                this._lastRemoteSave = now;
+                this.saveRemote(this.currentBoardTitle || 'Auto-saved Board');
+            } else {
+                // Schedule a deferred remote save for when the window opens
+                if (!this._remoteDeferred) {
+                    const remaining = this._remoteSaveMinInterval - (now - this._lastRemoteSave);
+                    this._remoteDeferred = setTimeout(() => {
+                        this._remoteDeferred = null;
+                        this._lastRemoteSave = Date.now();
+                        this.saveRemote(this.currentBoardTitle || 'Auto-saved Board');
+                    }, remaining);
+                }
+            }
         }
     },
 
@@ -112,6 +128,12 @@ window.NodesCanvas.CanvasState = {
                 return { ...baseData, settings: inst.config, value: inst.value };
             } else if (inst instanceof window.NodesCanvas.ViewerNode) {
                 return { ...baseData };
+            } else if (inst instanceof window.NodesCanvas.DataHolderNode) {
+                return { ...baseData, _live: inst._live };
+            } else if (inst instanceof window.NodesCanvas.HttpRequestNode) {
+                return { ...baseData, settings: { isAuto: inst.isAuto } };
+            } else if (inst instanceof window.NodesCanvas.ValueListNode) {
+                return { ...baseData, manualOptions: inst.manualOptions, selectedIndex: inst.selectedIndex };
             } else {
                 // Generic Function Node
                 return {
@@ -131,6 +153,9 @@ window.NodesCanvas.CanvasState = {
         if (inst instanceof window.NodesCanvas.CallDataNode) return 'call-data';
         if (inst instanceof window.NodesCanvas.SliderNode) return 'slider';
         if (inst instanceof window.NodesCanvas.ViewerNode) return 'viewer';
+        if (inst instanceof window.NodesCanvas.DataHolderNode) return 'data-holder';
+        if (inst instanceof window.NodesCanvas.HttpRequestNode) return 'http-request';
+        if (inst instanceof window.NodesCanvas.ValueListNode) return 'value-list';
         return 'function';
     },
 

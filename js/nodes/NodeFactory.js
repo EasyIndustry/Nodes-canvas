@@ -7,9 +7,13 @@ window.NodesCanvas.NodeFactory = {
      * Backward-compatible create method
      */
     create(template, x = 100, y = 100) {
-        // If it's a template (has an 'n_' id), don't pass the ID so createNode generates a fresh one
+        // If it's a template (has an 'n_' id or numeric ID), don't pass the ID 
+        // so createNode generates a fresh one for the instance
         const config = { ...template };
-        if (config.id && config.id.startsWith('n_')) {
+
+        // Use string conversion for startsWith safety
+        const idStr = String(config.id || '');
+        if (idStr.startsWith('n_') || !isNaN(config.id)) {
             delete config.id;
         }
         return this.createNode({ ...config, x, y });
@@ -37,8 +41,14 @@ window.NodesCanvas.NodeFactory = {
             instance = new window.NodesCanvas.SliderNode(finalConfig);
         } else if (isType('viewer') || config.id === 'n_viewer') {
             instance = new window.NodesCanvas.ViewerNode(finalConfig);
+        } else if (isType('data-holder') || config.id === 'n_data_holder') {
+            instance = new window.NodesCanvas.DataHolderNode(finalConfig);
         } else if (isType('expression') || config.id === 'n_expression') {
             instance = new window.NodesCanvas.ExpressionNode(finalConfig);
+        } else if (isType('http-request') || config.id === 'n_http_request') {
+            instance = new window.NodesCanvas.HttpRequestNode(finalConfig);
+        } else if (isType('value-list') || config.id === 'n_value_list') {
+            instance = new window.NodesCanvas.ValueListNode(finalConfig);
         } else {
             // Generic Functional Node
             instance = new window.NodesCanvas.Node(finalConfig);
@@ -70,7 +80,10 @@ window.NodesCanvas.NodeFactory = {
             else if (original instanceof window.NodesCanvas.CallDataNode) type = 'call-data';
             else if (original instanceof window.NodesCanvas.SliderNode) type = 'slider';
             else if (original instanceof window.NodesCanvas.ViewerNode) type = 'viewer';
+            else if (original instanceof window.NodesCanvas.DataHolderNode) type = 'data-holder';
             else if (original instanceof window.NodesCanvas.ExpressionNode) type = 'expression';
+            else if (original instanceof window.NodesCanvas.HttpRequestNode) type = 'http-request';
+            else if (original instanceof window.NodesCanvas.ValueListNode) type = 'value-list';
 
             // Deep clone the config
             const config = {

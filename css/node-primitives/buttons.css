@@ -1,0 +1,74 @@
+/* buttons.css — Reusable inline action buttons
+   Replaces: .dh-update-btn, .node-widget-btn, .panel-array-btn, .http-manual-run
+   All use --node-accent for automatic theming. */
+
+/* Base action button */
+.n-action-btn {
+    background: color-mix(in srgb, var(--node-accent, var(--accent-color)) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--node-accent, var(--accent-color)) 30%, transparent);
+    color: var(--node-accent, var(--accent-color));
+    border-radius: 5px;
+    padding: 3px 8px;
+    font-size: 10px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.n-action-btn:hover {
+    background: color-mix(in srgb, var(--node-accent, var(--accent-color)) 25%, transparent);
+}
+
+.n-action-btn:active {
+    transform: scale(0.95);
+}
+
+.n-action-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+    pointer-events: none;
+}
+
+/* Widget button variant (green accent, slightly larger) */
+.n-action-btn--widget {
+    --node-accent: #00dc82;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    letter-spacing: 0.3px;
+}
+
+/* Round icon button variant */
+.n-action-btn--round {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.n-action-btn--round:hover {
+    background: var(--node-accent, var(--accent-color));
+    transform: rotate(30deg);
+}
+
+/* Ghost button (no background, just icon) */
+.n-action-btn--ghost {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.4);
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.n-action-btn--ghost:hover {
+    color: #fff;
+}

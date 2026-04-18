@@ -1,0 +1,89 @@
+/* settings-panel.css — Inline settings/config panels inside nodes
+   Replaces: .slider-settings-panel, .settings-row, .form-section-title, .rounding-options */
+
+.n-settings-panel {
+    background: rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.n-settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.n-settings-row label {
+    font-size: 10px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.n-settings-row input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #eee;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    width: 60px;
+    outline: none;
+}
+
+.n-settings-row input.input-name {
+    width: 100px;
+}
+
+/* Section titles inside forms */
+.n-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--node-accent, var(--accent-color));
+    margin: 15px 0 8px 0;
+    letter-spacing: 0.5px;
+    opacity: 0.8;
+}
+
+/* Option row (e.g. rounding buttons) */
+.n-option-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.n-option-btn {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #eee;
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 700;
+    transition: all 0.2s;
+}
+
+.n-option-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.n-option-btn.active {
+    background: var(--node-accent, var(--accent-color));
+    border-color: var(--node-accent, var(--accent-color));
+    color: #fff;
+    box-shadow: 0 0 10px color-mix(in srgb, var(--node-accent, var(--accent-color)) 30%, transparent);
+}
+
+/* Domain grid (2-column form layout) */
+.n-domain-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}

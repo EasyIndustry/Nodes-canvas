@@ -11,6 +11,7 @@ window.NodesCanvas.BaseNode = class {
         this.title = config.title || "Base Node";
         this.description = config.description || '';
         this.icon = config.icon || 'default';
+        this.type = config.type || 'Function';
 
         this.element = null;
         this.isDragging = false;

@@ -15,7 +15,7 @@ window.NodesCanvas.NodeIcons = {
         'clock', 'calendar', 'alert-circle', 'alert-triangle', 'check-circle',
         'star', 'heart', 'flag', 'tag', 'link', 'lock', 'unlock', 'eye', 'eye-off',
         'trash-2', 'edit-2', 'save', 'download', 'upload', 'share-2', 'external-link',
-        'layers', 'server', 'hard-drive', 'cloud', 'wifi', 'bluetooth', 'mouse-pointer'
+        'layers', 'server', 'hard-drive', 'cloud', 'wifi', 'bluetooth', 'mouse-pointer', 'globe'
     ],
 
     /**

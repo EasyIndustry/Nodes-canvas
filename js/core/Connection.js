@@ -142,6 +142,7 @@ window.NodesCanvas.ConnectionManager = {
 
                 this.isDrawing = false;
                 if (window.NodesCanvas.CanvasState) window.NodesCanvas.CanvasState.scheduleSave();
+                document.dispatchEvent(new CustomEvent('canvas:connections-changed'));
                 if (window.NodesCanvas.CodeInspector && window.NodesCanvas.CodeInspector._isOpen) {
                     window.NodesCanvas.CodeInspector.refresh();
                 }
@@ -200,6 +201,7 @@ window.NodesCanvas.ConnectionManager = {
                     if (window.NodesCanvas.executionMode === 'run' && window.NodesCanvas.GraphEngine) {
                         window.NodesCanvas.GraphEngine.execute();
                     }
+                    document.dispatchEvent(new CustomEvent('canvas:connections-changed'));
                 }
             }
             this.startPort = null;

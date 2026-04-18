@@ -21,6 +21,13 @@ window.NodesCanvas.Node = class extends window.NodesCanvas.BaseNode {
     renderContent() {
         this.element.innerHTML = '';
 
+        // Add class-specific styling
+        if (this.type === 'Class') {
+            this.element.classList.add('node-class');
+        } else {
+            this.element.classList.remove('node-class');
+        }
+
         // Header
         const header = document.createElement("div");
         header.className = "node-header";
@@ -73,6 +80,11 @@ window.NodesCanvas.Node = class extends window.NodesCanvas.BaseNode {
 
         // Render Lucide icons
         if (window.lucide) window.lucide.createIcons();
+
+        // Pre-mount any ui.button/ui.toggle declared in the node's code
+        if (window.NodesCanvas.initNodeWidgets) {
+            window.NodesCanvas.initNodeWidgets(this.id, this.code);
+        }
     }
 
     initHeaderEvents(header) {

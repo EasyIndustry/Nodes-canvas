@@ -72,7 +72,7 @@ window.NodesCanvas.SidebarContextMenu = class {
                 const deleteNodesRecursively = async (folder) => {
                     if (folder.nodes) {
                         for (const node of folder.nodes) {
-                            if (node.id && !node.id.startsWith('n_')) { // Custom nodes usually don't have n_ prefix or we check editable
+                        if (node.id && !String(node.id).startsWith('n_')) {
                                 await auth.deleteCustomFeature(node.id);
                             }
                         }
@@ -85,6 +85,10 @@ window.NodesCanvas.SidebarContextMenu = class {
                 };
 
                 await deleteNodesRecursively(data);
+                // Also delete the folder itself from Xano if it has a real (numeric) ID
+                if (id && !String(id).startsWith('f_')) {
+                    await auth.deleteCustomFeature(id);
+                }
                 registry.deleteFolder(id);
             }, "Delete All");
 

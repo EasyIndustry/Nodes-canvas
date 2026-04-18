@@ -52,6 +52,12 @@ window.NodesCanvas.CodeInspector = {
         lines.push(`// ============================================================`);
         lines.push('');
 
+        if (window.NodesCanvas.LibrariesManager) {
+            const libSnippet = window.NodesCanvas.LibrariesManager.getAvailableCodeSnippet();
+            lines.push(libSnippet);
+            lines.push('');
+        }
+
         // 1. Identification and Variable Naming
         const dataVars = {}; // nodeId -> uniqueVariableName
         const nodeOutputVars = {}; // nodeId -> resultVarName

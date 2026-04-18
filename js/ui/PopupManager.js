@@ -152,7 +152,7 @@ window.NodesCanvas.PopupManager = class {
 
         modal.innerHTML = `
             <div class="node-form-header">
-                <span>${isEditing ? 'Edit Function' : 'Create Function'}</span>
+                <span>${isEditing ? `Edit ${config.type || 'Function'}` : `Create ${config.type || 'Function'}`}</span>
                 <button class="close-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
             </div>
             
@@ -738,14 +738,48 @@ ${returnShape}
             boards.forEach(b => {
                 const item = document.createElement('div');
                 item.className = 'board-list-item glass-panel';
+
+                const ts = b.last_updated || b.created_at;
+                const dateStr = ts ? new Date(ts).toLocaleDateString() : '—';
+
                 item.innerHTML = `
-                    <div class="board-item-title">${b.title}</div>
-                    <div class="board-item-date">${new Date(b.created_at).toLocaleDateString()}</div>
+                    <div class="board-item-info">
+                        <div class="board-item-title">${b.title || 'Untitled'}</div>
+                        <div class="board-item-date">${dateStr}</div>
+                    </div>
+                    <button class="board-delete-btn" title="Delete board">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+                        </svg>
+                    </button>
                 `;
+
+                // Click on item → load board
                 item.addEventListener('click', () => {
                     if (onSelect) onSelect(b.id);
                     this.close();
                 });
+
+                // Delete button — stop propagation so it doesn't trigger load
+                const deleteBtn = item.querySelector('.board-delete-btn');
+                deleteBtn.addEventListener('mousedown', e => e.stopPropagation());
+                deleteBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    if (!confirm(`Delete "${b.title}"? This cannot be undone.`)) return;
+                    deleteBtn.disabled = true;
+                    deleteBtn.textContent = '...';
+                    const result = await window.NodesCanvas.AuthManager.deleteBoard(b.id);
+                    if (result.success) {
+                        item.remove();
+                        if (!container.querySelector('.board-list-item')) {
+                            container.innerHTML = '<div style="grid-column:1/-1;text-align:center;opacity:0.5;padding:20px;">No boards found</div>';
+                        }
+                    } else {
+                        deleteBtn.disabled = false;
+                        deleteBtn.innerHTML = '✕';
+                    }
+                });
+
                 container.appendChild(item);
             });
         });
@@ -796,6 +830,59 @@ ${returnShape}
 
         modal.querySelector('.close-btn').addEventListener('click', () => this.close());
         modal.querySelector('#btn-save-cancel').addEventListener('click', () => this.close());
+    }
+
+    showTextAreaModal({ title, description, value, onSave }) {
+        this.overlay.innerHTML = '';
+        this.overlay.style.alignItems = 'center';
+        this.overlay.style.justifyContent = 'center';
+
+        const modal = document.createElement('div');
+        modal.className = 'node-form-modal glass-modal';
+        modal.style.width = '420px';
+
+        modal.innerHTML = `
+            <div class="node-form-header">
+                <span>${title || 'Edit Options'}</span>
+                <button class="close-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            </div>
+            
+            <div class="node-form-content">
+                <div class="form-row">
+                    <div style="font-size: 12px; opacity: 0.6; margin-bottom: 8px;">${description || ''}</div>
+                    <textarea id="modal-textarea" class="panel-textarea" rows="10" style="height: 200px; width: 100%; box-sizing: border-box;">${value || ''}</textarea>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button class="btn-secondary" id="btn-modal-cancel">Cancel</button>
+                <button class="btn-primary" id="btn-modal-save">Apply Changes</button>
+            </div>
+        `;
+
+        modal.addEventListener('mousedown', e => e.stopPropagation());
+
+        const saveBtn = modal.querySelector('#btn-modal-save');
+        saveBtn.addEventListener('click', () => {
+            const text = modal.querySelector('#modal-textarea').value;
+            if (onSave) onSave(text);
+            this.close();
+        });
+
+        modal.querySelector('#btn-modal-cancel').addEventListener('click', () => this.close());
+        modal.querySelector('.close-btn').addEventListener('click', () => this.close());
+
+        this.overlay.appendChild(modal);
+        this.overlay.classList.add('active');
+        
+        // Focus textarea
+        setTimeout(() => {
+            const ta = modal.querySelector('#modal-textarea');
+            if (ta) {
+                ta.focus();
+                ta.select();
+            }
+        }, 100);
     }
 
     showConfirm(title, message, onConfirm, confirmText = "Confirm") {

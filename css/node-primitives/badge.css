@@ -1,0 +1,44 @@
+/* badge.css — Colored pill badges for type/status indicators
+   Replaces: .panel-type-badge and all its type variants */
+
+.n-badge {
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    align-self: flex-start;
+    opacity: 0.85;
+}
+
+/* Type colors — use data-attribute for automatic coloring */
+.n-badge[data-type="text"],
+.n-badge--text {
+    background: rgba(200, 200, 200, 0.15);
+    color: #ccc;
+}
+
+.n-badge[data-type="number"],
+.n-badge--number {
+    background: rgba(0, 220, 130, 0.2);
+    color: #00dc82;
+}
+
+.n-badge[data-type="boolean"],
+.n-badge--boolean {
+    background: rgba(255, 165, 0, 0.2);
+    color: #ffa500;
+}
+
+.n-badge[data-type="array"],
+.n-badge--array {
+    background: rgba(130, 80, 255, 0.2);
+    color: #9b5ff0;
+}
+
+.n-badge[data-type="object"],
+.n-badge--object {
+    background: rgba(255, 71, 87, 0.2);
+    color: #ff4757;
+}

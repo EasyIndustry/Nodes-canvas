@@ -1,0 +1,219 @@
+/* light-theme.css — All light theme overrides in one place
+   Organized by primitive, not by node type. */
+
+/* === Shell === */
+/* (no overrides needed — shell uses CSS variables from main.css light-theme) */
+
+/* === Header === */
+/* (headers use --node-accent which stays the same) */
+
+/* === Ports / Sockets === */
+body.light-theme .gh-socket {
+    border-color: #adb5bd;
+    background: #fff;
+}
+
+/* === Toggles === */
+body.light-theme .n-toggle-track {
+    background: #ddd;
+    border-color: #ccc;
+}
+
+body.light-theme .n-toggle-knob {
+    background: #888;
+}
+
+body.light-theme .n-toggle-label {
+    color: #555;
+}
+
+/* === Buttons === */
+body.light-theme .n-action-btn--widget {
+    background: rgba(0, 180, 100, 0.08);
+    border-color: rgba(0, 180, 100, 0.3);
+    color: #007b45;
+}
+
+/* === Data Displays === */
+body.light-theme .n-data-body {
+    background: #f8fafc;
+}
+
+body.light-theme .n-mono-display {
+    color: #059669;
+}
+
+body.light-theme .n-mono-display--muted {
+    color: #1a202c;
+}
+
+body.light-theme .n-mono-display--empty {
+    color: #94a3b8;
+}
+
+body.light-theme .n-textarea {
+    background: #fff;
+    border-color: #ccc;
+    color: #222;
+}
+
+/* === Badges === */
+body.light-theme .n-badge--text,
+body.light-theme .n-badge[data-type="text"] {
+    background: rgba(0, 0, 0, 0.05);
+    color: #666;
+}
+
+body.light-theme .n-badge--number,
+body.light-theme .n-badge[data-type="number"] {
+    background: rgba(0, 180, 100, 0.1);
+    color: #008f5d;
+}
+
+body.light-theme .n-badge--boolean,
+body.light-theme .n-badge[data-type="boolean"] {
+    background: rgba(255, 140, 0, 0.1);
+    color: #d47a00;
+}
+
+body.light-theme .n-badge--array,
+body.light-theme .n-badge[data-type="array"] {
+    background: rgba(130, 80, 255, 0.1);
+    color: #7236d3;
+}
+
+body.light-theme .n-badge--object,
+body.light-theme .n-badge[data-type="object"] {
+    background: rgba(255, 71, 87, 0.1);
+    color: #d63031;
+}
+
+/* === Dropdowns === */
+body.light-theme .n-dropdown {
+    background: #fff;
+    border-color: #ccc;
+    color: #333;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
+body.light-theme .n-dropdown option,
+body.light-theme .n-dropdown optgroup {
+    background: #fff;
+    color: #333;
+}
+
+body.light-theme .n-dropdown:disabled {
+    background: #f0f0f0;
+}
+
+/* === Status Bar === */
+body.light-theme .n-status-bar {
+    background: rgba(0, 0, 0, 0.03);
+    border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+/* === Widget Zone === */
+body.light-theme .node-widget-zone {
+    border-top-color: rgba(0, 0, 0, 0.08);
+}
+
+/* === Icon Picker === */
+body.light-theme .icon-search-input {
+    background: #fff;
+    color: #333;
+    border-color: #ccc;
+}
+
+body.light-theme .icon-picker-grid {
+    background: #f5f5f5;
+    border-color: #ddd;
+}
+
+body.light-theme .icon-pick-btn {
+    background: #fff;
+    color: #666;
+    border-color: #eee;
+}
+
+body.light-theme .icon-pick-btn:hover {
+    background: #eee;
+    color: #000;
+}
+
+body.light-theme .icon-pick-btn.selected {
+    background: #3b82f6;
+    color: #fff;
+}
+
+/* === Slider GH === */
+body.light-theme .slider-gh-container {
+    background: #ffffff;
+    border-color: #ced4da;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+body.light-theme .slider-gh-name-section {
+    background: #f8f9fa;
+    border-right-color: #dee2e6;
+}
+
+body.light-theme .slider-gh-label {
+    color: #495057;
+    opacity: 1;
+}
+
+body.light-theme .slider-gh-track-section {
+    background: #f1f3f5;
+}
+
+body.light-theme .slider-gh-value-display {
+    color: #212529;
+    text-shadow: none;
+}
+
+body.light-theme .slider-gh-value-input {
+    background: #fff;
+    color: #000;
+}
+
+/* === Node-specific light overrides === */
+
+/* Panel */
+body.light-theme .panel-label-display,
+body.light-theme .panel-label-input {
+    color: #222 !important;
+}
+
+body.light-theme .panel-body .n-action-btn--ghost {
+    color: #444;
+}
+
+body.light-theme .panel-body .n-action-btn--ghost:hover {
+    color: #000;
+}
+
+/* Viewer */
+body.light-theme .viewer-node {
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+body.light-theme .viewer-node .node-port-side {
+    background: #f8fafc;
+    border-right-color: #e2e8f0;
+}
+
+/* Data Holder */
+body.light-theme .data-holder-node {
+    border-color: rgba(59, 130, 246, 0.4);
+}
+
+body.light-theme .data-holder-node .n-mono-display--muted {
+    color: #1a202c;
+}
+
+/* Call Data */
+body.light-theme .call-data-node .node-header-title,
+body.light-theme .call-data-node .node-header-icon {
+    color: #007aff;
+}

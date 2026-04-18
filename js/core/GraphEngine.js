@@ -72,23 +72,24 @@ window.NodesCanvas.GraphEngine = {
     /**
      * Execute the entire graph or starting from specific nodes
      */
-    execute() {
+    async execute() {
         if (window.NodesCanvas.executionMode !== 'run') return;
 
         console.time('[GraphEngine] Execution');
         this._buildGraph();
         this._nodeData = {}; // Clear previous values
 
-        this._executionOrder.forEach(nodeId => {
+        for (let i = 0; i < this._executionOrder.length; i++) {
+            const nodeId = this._executionOrder[i];
             const instance = window.NodesCanvas.NodeRegistry.get(nodeId);
-            if (!instance) return;
+            if (!instance) continue;
 
             try {
-                this._executeNode(instance);
+                await this._executeNode(instance);
             } catch (err) {
                 console.error(`[GraphEngine] Error executing node ${nodeId}:`, err);
             }
-        });
+        }
 
         console.timeEnd('[GraphEngine] Execution');
     },
@@ -96,7 +97,7 @@ window.NodesCanvas.GraphEngine = {
     /**
      * Run the logic for a single node instance
      */
-    _executeNode(instance) {
+    async _executeNode(instance) {
         // 1. Gather inputs
         const inputs = {};
         const connections = window.NodesCanvas.ConnectionManager ? window.NodesCanvas.ConnectionManager.getConnections() : [];
@@ -126,38 +127,110 @@ window.NodesCanvas.GraphEngine = {
             result.outputs[`${instance.id}_out`] = instance.value;
 
         } else if (instance instanceof window.NodesCanvas.ViewerNode) {
-            const val = Object.values(inputs)[0]; // Watch port value
+            const val = Object.values(inputs)[0];
             instance.setValue(val);
+
+        } else if (instance instanceof window.NodesCanvas.DataHolderNode) {
+            const val = Object.values(inputs)[0];
+            instance.setValue(val);
+            // Always expose the held value (even when frozen) so downstream nodes get it
+            result.outputs[`${instance.id}_out`] = instance._heldValue;
 
         } else if (instance instanceof window.NodesCanvas.ExpressionNode) {
             // Transform expression like "x * 2" into "return { Result: (x * 2) };"
             const wrappedCode = `return { Result: (${instance.code}) };`;
-            const fnResult = this._runFunction(wrappedCode, inputs);
-            result.outputs = fnResult || {};
+            const fnResult = await this._runFunction(wrappedCode, inputs, instance);
+            result.outputs = this._mapOutputs(instance, fnResult);
+
+        } else if (instance instanceof window.NodesCanvas.ValueListNode) {
+            // Dropdown node with dynamic input
+            const listData = inputs['in_list'];
+            instance.setRuntimeData(listData);
+            result.outputs[`out_val`] = instance.value;
 
         } else {
             // Generic Function Node
-            const fnResult = this._runFunction(instance.code, inputs);
-            result.outputs = fnResult || {};
+            const fnResult = await this._runFunction(instance.code, inputs, instance);
+            result.outputs = this._mapOutputs(instance, fnResult);
         }
 
         this._nodeData[instance.id] = result;
     },
 
     /**
+     * Map the raw returned object keys (which could be labels like "Output_A")
+     * into internal port IDs (like "out_1") so connections can read them.
+     */
+    _mapOutputs(instance, rawResult) {
+        const raw = rawResult || {};
+        const mapped = { ...raw };
+
+        if (instance && instance.outputs) {
+            instance.outputs.forEach(out => {
+                const labelVar = (out.label || '').replace(/[^a-zA-Z0-9_$]/g, '_').replace(/^[0-9]/, '_$&') || 'Result';
+                if (raw[out.id] !== undefined) {
+                    mapped[out.id] = raw[out.id];
+                } else if (raw[labelVar] !== undefined) {
+                    mapped[out.id] = raw[labelVar];
+                }
+            });
+        }
+        return mapped;
+    },
+
+    /**
      * Safely run the user-defined Javascript code
      */
-    _runFunction(code, inputs) {
+    async _runFunction(code, inputs, instance) {
         try {
-            // Build the function wrapper
+            // Pre-process arguments dictionary for the `execute` function injection
+            const executeArgs = {};
+            if (instance && instance.inputs) {
+                instance.inputs.forEach(inp => {
+                    const labelVar = (inp.label || '').replace(/[^a-zA-Z0-9_$]/g, '_').replace(/^[0-9]/, '_$&') || 'param';
+                    executeArgs[labelVar] = inputs[inp.id];
+                    executeArgs[inp.id] = inputs[inp.id]; // fallback
+                });
+            } else {
+                Object.assign(executeArgs, inputs);
+            }
+
             const inputKeys = Object.keys(inputs);
             const inputVals = Object.values(inputs);
 
-            // Expected return format: { portId: value, ... }
-            // If the code doesn't start with "return", and doesn't look like a full function, we might want to wrap it
-            // but for now, the registry nodes use "return { ... }" which is safe for new Function(...)
-            const fn = new Function(...inputKeys, code);
-            const rawResult = fn(...inputVals);
+            const libContext = window.NodesCanvas.LibrariesManager ?
+                window.NodesCanvas.LibrariesManager.getContextObject() : {};
+
+            const contextKeys = Object.keys(libContext);
+            const contextVals = Object.values(libContext);
+
+            // Inject __nodeId so widgets can self-mount
+            const nodeId = instance ? instance.id : null;
+
+            // Inject ui as constructor object (class references)
+            const uiCtx = {
+                button: (label) => new window.NodesCanvas.NodeButton({ label, nodeId }),
+                toggle: (label, defaultVal = false) => new window.NodesCanvas.NodeToggle({ label, nodeId, default: defaultVal })
+            };
+
+            const allKeys = [...inputKeys, ...contextKeys, '__executeArgs', '__nodeId', 'ui'];
+            const allVals = [...inputVals, ...contextVals, executeArgs, nodeId, uiCtx];
+
+            let wrappedCode = `${code}\n`;
+            
+            if (code.includes('function execute')) {
+                wrappedCode += `\nif (typeof execute === 'function') return execute(__executeArgs);\n`;
+            } else if (!code.trim().startsWith('return') && !code.trim().startsWith('async')) {
+                wrappedCode = `return (async () => { ${code} })();`;
+            }
+
+            const fn = new Function(...allKeys, wrappedCode);
+            let rawResult = fn(...allVals);
+
+            if (rawResult instanceof Promise) {
+                rawResult = await rawResult;
+            }
+
             return rawResult;
         } catch (e) {
             console.warn('[GraphEngine] Function Execution Error:', e);

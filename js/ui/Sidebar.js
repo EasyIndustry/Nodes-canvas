@@ -32,32 +32,51 @@ window.NodesCanvas.Sidebar = class {
         const existing = this.element.querySelector('.sidebar-settings-container');
         if (existing) existing.remove();
 
-        if (!user) return;
-
-        // Settings / Profile Section at bottom
         const settingsContainer = document.createElement('div');
         settingsContainer.className = 'sidebar-settings-container';
 
-        const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+        if (user) {
+            const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
 
-        settingsContainer.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <div class="user-avatar-initials">${initials}</div>
-                <div class="user-details">
-                    <span class="user-name">${user.name}</span>
-                    <span class="user-email">${user.email}</span>
+            settingsContainer.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div class="user-avatar-initials">${initials}</div>
+                    <div class="user-details">
+                        <span class="user-name">${user.name}</span>
+                        <span class="user-email">${user.email}</span>
+                    </div>
                 </div>
-            </div>
-            <button class="sidebar-settings-btn" title="Settings">
-                <i data-lucide="settings" style="width:16px; height:16px;"></i>
-            </button>
-        `;
+                <button class="sidebar-settings-btn" title="Settings">
+                    <i data-lucide="settings" style="width:16px; height:16px;"></i>
+                </button>
+            `;
 
-        settingsContainer.querySelector('.sidebar-settings-btn').addEventListener('click', () => {
-            // Open global settings dropdown
-            const btn = document.getElementById('btn-settings');
-            if (btn) btn.click();
-        });
+            settingsContainer.querySelector('.sidebar-settings-btn').addEventListener('click', () => {
+                const btn = document.getElementById('btn-settings');
+                if (btn) btn.click();
+            });
+        } else {
+            settingsContainer.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
+                    <button id="btn-open-libraries" class="sidebar-libraries-btn" title="Open Libraries Panel" style="display: flex; align-items: center; gap: 6px; background: rgba(0, 220, 130, 0.1); border: 1px solid var(--accent-color); color: var(--accent-color); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; width: 100%;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                        </svg>
+                        Libraries
+                    </button>
+                </div>
+            `;
+
+            const libBtn = settingsContainer.querySelector('#btn-open-libraries');
+            if (libBtn) {
+                libBtn.addEventListener('click', () => {
+                    if (window.NodesCanvas.LibrariesPanel) {
+                        window.NodesCanvas.LibrariesPanel.toggle();
+                    }
+                });
+            }
+        }
 
         this.element.appendChild(settingsContainer);
         if (window.lucide) window.lucide.createIcons();
@@ -87,29 +106,21 @@ window.NodesCanvas.Sidebar = class {
         }
     }
 
-    setUserName(name) {
-        const titleEl = document.getElementById("sidebar-library-title");
-        if (titleEl) {
-            if (name) {
-                const firstName = name.split(' ')[0];
-                titleEl.textContent = `${firstName}'s Library`;
-            } else {
-                titleEl.textContent = "Library";
-            }
-        }
-    }
-
     renderTree(folders) {
         this.treeContainer.innerHTML = '';
 
-        // 1. Separate Built-in (Functions) from User folders
+        // 1. Separate Built-in from User folders
         const builtInFolders = folders.filter(f => f.editable === false);
         const userFolders = folders.filter(f => f.editable !== false);
 
+        // Sub-partition User Folders by Category (Function vs Class)
+        const userFunctionsFolders = userFolders.filter(f => f.category !== 'Class');
+        const classFolders = userFolders.filter(f => f.category === 'Class');
+
         // 2. Create Sections
-        this.renderSection("Default Functions", builtInFolders);
-        this.renderSection("User Funct", userFolders, true); // hasAdd = true
-        this.renderSection("Classes", [], true); // hasAdd = true
+        this.renderSection("Default Functions", builtInFolders, false);
+        this.renderSection("User Functions", userFunctionsFolders, true);
+        this.renderSection("Classes", classFolders, true);
 
         // Create icons only ONCE after the whole tree is in the DOM
         if (window.lucide) window.lucide.createIcons();
@@ -175,9 +186,10 @@ window.NodesCanvas.Sidebar = class {
         this.treeContainer.appendChild(section);
     }
 
-    handleSectionAddFolder(sectionTitle) {
+    async handleSectionAddFolder(sectionTitle) {
         // Logic to add folder to the correct section
-        const id = window.NodesCanvas.Registry.addFolder("New Folder");
+        const category = sectionTitle === "Classes" ? "Class" : "Function";
+        const id = await window.NodesCanvas.Registry.addFolder("New Folder", null, category);
 
         // Open the section if it was closed
         const sections = Array.from(this.treeContainer.querySelectorAll('.sidebar-section'));
@@ -189,7 +201,7 @@ window.NodesCanvas.Sidebar = class {
         setTimeout(() => {
             const newFolderEl = document.querySelector(`.tree-folder[data-id="${id}"] .edit-folder-btn`);
             if (newFolderEl) newFolderEl.click();
-        }, 50);
+        }, 100);
     }
 
     filterTree(term) {
@@ -322,14 +334,15 @@ window.NodesCanvas.Sidebar = class {
 
             // Add Subfolder logic
             if (addSubBtn) {
-                addSubBtn.addEventListener('click', (e) => {
+                addSubBtn.addEventListener('click', async (e) => {
                     e.stopPropagation();
-                    const newId = window.NodesCanvas.Registry.addFolder("New Folder", folder.id);
+                    const category = folder.category || 'Function';
+                    const newId = await window.NodesCanvas.Registry.addFolder("New Folder", folder.id, category);
                     folderEl.classList.add('open');
                     setTimeout(() => {
                         const newFolderEl = document.querySelector(`.tree-folder[data-id="${newId}"] .edit-folder-btn`);
                         if (newFolderEl) newFolderEl.click();
-                    }, 50);
+                    }, 100);
                 });
             }
 
@@ -391,14 +404,22 @@ window.NodesCanvas.Sidebar = class {
             // 3. "Create function here" button
             if (folder.editable !== false) {
                 const addNodeBtn = document.createElement('div');
-                addNodeBtn.className = 'tree-node-item';
+                addNodeBtn.className = 'tree-add-node-btn';
+                addNodeBtn.style.padding = '8px 16px 8px 32px';
+                addNodeBtn.style.fontSize = '12px';
+                addNodeBtn.style.cursor = 'pointer';
                 addNodeBtn.style.color = 'var(--accent-color)';
                 addNodeBtn.style.fontStyle = 'italic';
-                addNodeBtn.innerHTML = `<em>+ Create Function</em>`;
+
+                const isClass = folder.category === 'Class';
+                addNodeBtn.innerHTML = `<em>+ Create ${isClass ? 'Class' : 'Function'}</em>`;
+
                 addNodeBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     if (window.NodesCanvas.popupManager) {
-                        window.NodesCanvas.popupManager.showNodeForm(null, folder.id, (config, targetFolderId) => {
+                        const initialConfig = isClass ? { title: 'New Class', type: 'Class', icon: 'package' } : null;
+                        window.NodesCanvas.popupManager.showNodeForm(initialConfig, folder.id, (config, targetFolderId) => {
+                            if (isClass) config.type = 'Class'; // Force type if in class folder
                             window.NodesCanvas.Registry.addNodeTemplate(targetFolderId, config);
                             folderEl.classList.add('open');
                         });

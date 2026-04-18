@@ -1,0 +1,158 @@
+/* node-accents.css — Per-node accent color declarations and minimal overrides.
+   Each node ONLY declares --node-accent; everything else comes from primitives. */
+
+/* --- Data Nodes --- */
+.panel-node {
+    --node-accent: var(--accent-color);
+    width: auto;
+    min-width: 180px;
+    max-width: 300px;
+}
+
+.viewer-node {
+    --node-accent: #3b82f6;
+    min-width: 160px;
+    overflow: hidden;
+}
+
+.data-holder-node {
+    --node-accent: #63b3ed;
+    min-width: 200px;
+    max-width: 340px;
+}
+
+.value-list-node {
+    --node-accent: var(--accent-color);
+    min-width: 160px;
+}
+
+.call-data-node {
+    --node-accent: #4da6ff;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* --- Utility Nodes --- */
+.node-class {
+    --node-accent: #9b5ff0;
+}
+
+.http-request-node {
+    min-width: 220px !important;
+}
+
+.http-request-node .node-body {
+    padding-left: 12px;
+    padding-right: 12px;
+}
+
+/* --- Panel-specific: editable name input & accent strip --- */
+.panel-accent-strip {
+    width: 3px;
+    height: 16px;
+    background: var(--node-accent);
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.panel-label-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--node-accent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    flex-grow: 1;
+    outline: none;
+    cursor: text;
+}
+
+.panel-label-input:focus {
+    opacity: 1;
+}
+
+.panel-label-display {
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: 0.3px;
+    opacity: 0.9;
+}
+
+/* --- Panel body layout --- */
+.panel-body {
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* --- Slider node body/output --- */
+.slider-body {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.slider-main-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.slider-input {
+    flex-grow: 1;
+    cursor: pointer;
+    accent-color: var(--node-accent);
+}
+
+.slider-value-box {
+    width: 60px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--glass-border);
+    color: #fff;
+    border-radius: 4px;
+    padding: 4px;
+    font-size: 12px;
+    text-align: center;
+    outline: none;
+}
+
+.slider-output {
+    padding-top: 0;
+}
+
+/* --- ValueList-specific: mode-input (awaiting connection indicator) --- */
+.valuelist-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.valuelist-container.mode-input .node-header--tinted {
+    border-bottom-color: #ffd700;
+}
+
+.valuelist-container.mode-input .node-header-title {
+    color: #ffd700;
+}
+
+.valuelist-body {
+    padding: 10px;
+}
+
+/* Socket positioning for ValueList */
+.value-list-node .socket {
+    position: absolute;
+    top: 55px;
+}
+
+/* --- Data Holder main layout --- */
+.dh-main {
+    display: flex;
+    align-items: stretch;
+}

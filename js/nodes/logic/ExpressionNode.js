@@ -79,14 +79,27 @@ window.NodesCanvas.ExpressionNode = class extends window.NodesCanvas.BaseNode {
     }
 
     updateInputsFromExpression() {
-        // Simple regex to find variables (word boundaries, starts with alpha/_, then alphanumeric/_)
-        const matches = this.code.match(/\b([a-zA-Z_][a-zA-Z0-9_]*)\b/g) || [];
+        // Match identifiers NOT preceded by a dot (i.e., root variables, not object properties)
+        // Uses a regex that grabs every word, then we filter out those that follow a '.'
+        const tokenRegex = /(?<!\.\s*)(?<![.\w])\b([a-zA-Z_][a-zA-Z0-9_]*)\b(?!\s*\.?\s*\()/g;
+        const matches = [];
+        let m;
+        while ((m = tokenRegex.exec(this.code)) !== null) {
+            matches.push(m[1]);
+        }
 
-        // Exclude JS keywords and numbers
-        const keywords = ['Math', 'true', 'false', 'PI', 'E', 'sin', 'cos', 'tan', 'abs', 'sqrt', 'pow', 'log', 'exp', 'min', 'max', 'random', 'number', 'string', 'boolean', 'if', 'else', 'return', 'function', 'var', 'let', 'const'];
+        // Exclude JS keywords, Math methods, and common word-like constants
+        const keywords = new Set(['Math', 'true', 'false', 'null', 'undefined', 'PI', 'E',
+            'sin', 'cos', 'tan', 'abs', 'sqrt', 'pow', 'log', 'exp', 'min', 'max', 'random',
+            'floor', 'ceil', 'round', 'number', 'string', 'boolean', 'if', 'else', 'return',
+            'function', 'var', 'let', 'const', 'for', 'while', 'do', 'break', 'continue',
+            'new', 'typeof', 'instanceof', 'in', 'of', 'this', 'class', 'import', 'export',
+            'parseInt', 'parseFloat', 'isNaN', 'isFinite', 'JSON', 'Object', 'Array',
+            'String', 'Number', 'Boolean', 'Date', 'RegExp', 'Error', 'console'
+        ]);
 
         const variables = [...new Set(matches)]
-            .filter(v => !keywords.includes(v))
+            .filter(v => !keywords.has(v))
             .filter(v => isNaN(Number(v)));
 
         // Create new inputs array

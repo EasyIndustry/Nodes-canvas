@@ -205,6 +205,7 @@ https://x8ki-letl-twmt.n7.xano.io/api:733Bs-6P/board_canvas_studio_user/{user_ca
 input: (board_canvas_studio_id is required)
 
 {
+  "board_canvas_studio_id":0,
   "user_canvas_studio_id": 0,
   "title": "string",
   "description": "string",

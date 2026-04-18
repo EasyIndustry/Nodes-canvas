@@ -1,0 +1,10 @@
+/* widgets.css — Node widget zone (embeddable UI inside function nodes)
+   Container for embedded buttons/toggles that appear below ports. */
+
+.node-widget-zone {
+    padding: 6px 10px 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}

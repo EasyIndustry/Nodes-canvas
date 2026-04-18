@@ -1,0 +1,57 @@
+/* data-display.css — Monospace data display areas
+   Replaces: .viewer-display, .dh-display, .panel-textarea
+   Shared visual treatment for any code/data rendering zone. */
+
+/* Read-only display */
+.n-mono-display {
+    font-family: 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 11px;
+    color: #00dc82;
+    white-space: pre-wrap;
+    word-break: break-all;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.n-mono-display--muted {
+    color: #e2e8f0;
+}
+
+.n-mono-display--empty {
+    color: rgba(255, 255, 255, 0.2);
+    font-style: italic;
+    font-size: 10px;
+}
+
+/* Scrollable container for data displays */
+.n-data-body {
+    flex: 1;
+    padding: 10px 12px;
+    background: rgba(0, 0, 0, 0.2);
+    min-height: 48px;
+    max-height: 240px;
+    overflow: auto;
+}
+
+/* Editable textarea */
+.n-textarea {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--glass-border);
+    color: var(--node-text);
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-family: 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 13px;
+    resize: vertical;
+    outline: none;
+    min-height: 36px;
+    line-height: 1.5;
+    transition: border-color 0.2s;
+    user-select: text;
+    cursor: text;
+}
+
+.n-textarea:focus {
+    border-color: var(--node-accent, var(--accent-color));
+}
